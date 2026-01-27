@@ -1,173 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sheet Dashboard</title>
+<title>Solar Plant Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  background: #f4f4f4;
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    padding: 15px;
+}
+
+h2 {
+    margin-bottom: 10px;
 }
 
 .filters {
-  display: flex;
-  gap: 30px;
-  margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
 }
 
-.filter-box {
-  background: white;
-  padding: 10px;
-  border: 1px solid #ccc;
-  max-height: 180px;
-  overflow-y: auto;
+.dropdown {
+    position: relative;
 }
 
-.filter-box h4 {
-  margin: 0 0 10px 0;
+.dropdown button {
+    padding: 8px 12px;
+    border: 1px solid #333;
+    background: white;
+    cursor: pointer;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 10px;
+    z-index: 10;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+canvas {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 th, td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 13px;
+    text-align: center;
 }
 
 th {
-  background: #4CAF50;
-  color: white;
+    background: #34495e;
+    color: white;
+    position: sticky;
+    top: 0;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Plant Generation Dashboard</h2>
+<h2>☀️ Solar Plant Performance Dashboard</h2>
 
-<!-- 🔹 FILTERS -->
 <div class="filters">
+    <div class="dropdown">
+        <button>Select Plant</button>
+        <div class="dropdown-content" id="plantFilter"></div>
+    </div>
 
-  <!-- Plant Filter -->
-  <div class="filter-box">
-    <h4>Plant Name</h4>
-    <div id="plantFilter"></div>
-  </div>
-
-  <!-- Month Filter -->
-  <div class="filter-box">
-    <h4>Month</h4>
-    <div id="monthFilter"></div>
-  </div>
-
+    <div class="dropdown">
+        <button>Select Month</button>
+        <div class="dropdown-content" id="monthFilter"></div>
+    </div>
 </div>
 
-<table id="table">
-  <thead></thead>
-  <tbody></tbody>
+<canvas id="barChart" height="120"></canvas>
+
+<div class="table-wrapper">
+<table id="dataTable">
+    <thead></thead>
+    <tbody></tbody>
 </table>
+</div>
 
 <script>
-const sheetURL =
-"https://docs.google.com/spreadsheets/d/1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg/gviz/tq?tqx=out:csv&sheet=Sheet1";
-
+// ================== SHEET DETAILS ==================
+const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
+const GID = "0";
 const MAX_COLUMNS = 19;
 
+// Column Index (0 based)
+const PLANT_COL = 0;
+const MONTH_COL = 1;
+const ACTUAL_GEN_COL = 3;
+
+// ===================================================
 let allData = [];
 let selectedPlants = new Set();
 let selectedMonths = new Set();
+let chart;
+
+const sheetURL =
+`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
 fetch(sheetURL)
 .then(res => res.text())
 .then(csv => {
-  const rows = csv.trim().split("\n");
-  const headers = rows[0].split(",").slice(0, MAX_COLUMNS);
+    const rows = csv.split("\n").map(r =>
+        r.split(",").slice(0, MAX_COLUMNS).map(c => c.replace(/"/g, "").trim())
+    );
 
-  // HEADER
-  document.querySelector("#table thead").innerHTML =
-    `<tr>${headers.map(h => `<th>${h.replace(/"/g,"")}</th>`).join("")}</tr>`;
+    const headers = rows.shift();
+    allData = rows;
 
-  // DATA
-  rows.slice(1).forEach(row => {
-    const cols = row.split(",").slice(0, MAX_COLUMNS).map(c => c.replace(/"/g,""));
-    allData.push(cols);
-  });
-
-  buildFilters();
-  renderTable();
+    createHeader(headers);
+    createFilters();
+    updateView();
 });
 
-// 🔹 BUILD FILTER CHECKBOXES
-function buildFilters() {
-
-  const plantIndex = 0; // 🔴 Plant Name column
-  const monthIndex = 1; // 🔴 Month column
-
-  const plants = [...new Set(allData.map(r => r[plantIndex]))];
-  const months = [...new Set(allData.map(r => r[monthIndex]))];
-
-  const plantDiv = document.getElementById("plantFilter");
-  plants.forEach(p => {
-    plantDiv.innerHTML += `
-      <label>
-        <input type="checkbox" checked onchange="togglePlant('${p}', this.checked)">
-        ${p}
-      </label><br>
-    `;
-    selectedPlants.add(p);
-  });
-
-  const monthDiv = document.getElementById("monthFilter");
-  months.forEach(m => {
-    monthDiv.innerHTML += `
-      <label>
-        <input type="checkbox" checked onchange="toggleMonth('${m}', this.checked)">
-        ${m}
-      </label><br>
-    `;
-    selectedMonths.add(m);
-  });
+function createHeader(headers) {
+    document.querySelector("#dataTable thead").innerHTML =
+        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
 }
 
-// 🔹 TOGGLE FUNCTIONS
-function togglePlant(value, checked) {
-  checked ? selectedPlants.add(value) : selectedPlants.delete(value);
-  renderTable();
+function createFilters() {
+    const plantSet = new Set();
+    const monthSet = new Set();
+
+    allData.forEach(r => {
+        plantSet.add(r[PLANT_COL]);
+        monthSet.add(r[MONTH_COL]);
+    });
+
+    plantSet.forEach(p => addCheckbox("plantFilter", p, selectedPlants));
+    monthSet.forEach(m => addCheckbox("monthFilter", m, selectedMonths));
 }
 
-function toggleMonth(value, checked) {
-  checked ? selectedMonths.add(value) : selectedMonths.delete(value);
-  renderTable();
+function addCheckbox(containerId, value, set) {
+    const div = document.getElementById(containerId);
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+
+    cb.type = "checkbox";
+    cb.checked = true;
+    set.add(value);
+
+    cb.onchange = () => {
+        cb.checked ? set.add(value) : set.delete(value);
+        updateView();
+    };
+
+    label.appendChild(cb);
+    label.append(" " + value);
+    div.appendChild(label);
 }
 
-// 🔹 RENDER TABLE
-function renderTable() {
-  const tbody = document.querySelector("#table tbody");
-  tbody.innerHTML = "";
+function updateView() {
+    updateTable();
+    updateChart();
+}
 
-  const plantIndex = 0;
-  const monthIndex = 2;
+function updateTable() {
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
 
-  allData.forEach(row => {
-    if (
-      selectedPlants.has(row[plantIndex]) &&
-      selectedMonths.has(row[monthIndex])
-    ) {
-      tbody.innerHTML += `
-        <tr>${row.map(col => `<td>${col}</td>`).join("")}</tr>
-      `;
-    }
-  });
+    allData.forEach(r => {
+        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+            tbody.innerHTML += `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`;
+        }
+    });
+}
+
+function updateChart() {
+    const plantTotals = {};
+
+    allData.forEach(r => {
+        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+            plantTotals[r[PLANT_COL]] =
+                (plantTotals[r[PLANT_COL]] || 0) + Number(r[ACTUAL_GEN_COL] || 0);
+        }
+    });
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(plantTotals),
+            datasets: [{
+                label: "Actual Generation",
+                data: Object.values(plantTotals)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
 }
 </script>
 
 </body>
 </html>
-
