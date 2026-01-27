@@ -27,10 +27,11 @@ h2 { text-align: center; margin-bottom: 15px; }
 }
 
 .dropdown button {
-    padding: 1px 5px;
-    border: 1px solid #9999;
+    padding: 3px 6px;
+    border: 1px solid #999;
     background: white;
     cursor: pointer;
+    font-size: 12px;
 }
 
 .dropdown-content {
@@ -51,39 +52,48 @@ h2 { text-align: center; margin-bottom: 15px; }
 
 .dropdown-content label {
     display: block;
-    font-size: 10px;
-    margin-bottom: 1px;
+    font-size: 12px;
+    margin-bottom: 2px;
 }
 
 .action-btn {
-    font-size: 10px;
-    margin-bottom: 1px;
-    width: 40%;
+    font-size: 12px;
+    margin-bottom: 2px;
+    width: 48%;
     cursor: pointer;
 }
 
+/* Top section: tables + chart */
+.top-container {
+    display: flex;
+    justify-content: space-between; /* tables left, chart right */
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* Comparison tables stack horizontally */
+.comparison-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Chart container on top-right */
 .chart-container {
-    width: 30%; /* half size */
-    margin: 0 auto 20px auto;
+    width: 35%;
+    align-self: flex-start;
 }
 
 canvas {
     background: white;
-    padding: 1px;
+    padding: 5px;
     border-radius: 10px;
 }
 
-/* Horizontal Comparison Tables */
-.comparison-container {
-    display: flex;
-    gap: 9px;
-    justify-content: left;
-    flex-wrap: wrap;
-    margin-bottom: 1px;
-}
-
+/* Comparison tables */
 .comparison-table {
-    width: 100px;
+    width: 120px;
     border-collapse: collapse;
     background: white;
 }
@@ -110,6 +120,7 @@ canvas {
     color: #a50000;
 }
 
+/* DATA TABLE */
 .table-wrapper {
     max-height: 400px;
     overflow-y: auto;
@@ -162,47 +173,50 @@ table.data-table {
     </div>
 </div>
 
-<!-- CHART -->
-<div class="chart-container">
-<canvas id="barChart" width="100" height="50"></canvas>
-</div>
+<!-- TOP SECTION: Comparison Tables + Chart -->
+<div class="top-container">
+    <!-- Comparison Tables -->
+    <div class="comparison-container">
+        <div>
+            <h4 style="text-align:center; color:red;">Total Generation</h4>
+            <table class="comparison-table" id="genTable">
+                <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
+                <tr>
+                    <td id="genActual">0</td>
+                    <td id="genExpected">0</td>
+                    <td id="genDiff">0%</td>
+                </tr>
+            </table>
+        </div>
 
-<!-- COMPARISON TABLES HORIZONTAL -->
-<div class="comparison-container">
-    <div>
-        <h4 style="text-align:center; color:red;">Total Generation</h4>
-        <table class="comparison-table" id="genTable">
-            <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
-            <tr>
-                <td id="genActual">0</td>
-                <td id="genExpected">0</td>
-                <td id="genDiff">0%</td>
-            </tr>
-        </table>
+        <div>
+            <h4 style="text-align:center; color:purple;">Total IR (KWh/m²)</h4>
+            <table class="comparison-table" id="irTable">
+                <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
+                <tr>
+                    <td id="irActual">0</td>
+                    <td id="irExpected">0</td>
+                    <td id="irDiff">0%</td>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <h4 style="text-align:center; color:green;">Exp Gen diff with Actual IR</h4>
+            <table class="comparison-table" id="expIRTable">
+                <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
+                <tr>
+                    <td id="expIRActual">0</td>
+                    <td id="expIRExpected">0</td>
+                    <td id="expIRDiff">0%</td>
+                </tr>
+            </table>
+        </div>
     </div>
 
-    <div>
-        <h4 style="text-align:center; color:purple;">Total IR (KWh/m²)</h4>
-        <table class="comparison-table" id="irTable">
-            <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
-            <tr>
-                <td id="irActual">0</td>
-                <td id="irExpected">0</td>
-                <td id="irDiff">0%</td>
-            </tr>
-        </table>
-    </div>
-
-    <div>
-        <h4 style="text-align:center; color:green;">Exp Gen diff with Actual IR</h4>
-        <table class="comparison-table" id="expIRTable">
-            <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
-            <tr>
-                <td id="expIRActual">0</td>
-                <td id="expIRExpected">0</td>
-                <td id="expIRDiff">0%</td>
-            </tr>
-        </table>
+    <!-- Chart -->
+    <div class="chart-container">
+        <canvas id="barChart" width="100" height="50"></canvas>
     </div>
 </div>
 
@@ -353,8 +367,8 @@ function updateComparisonTables() {
 
     // Total Generation
     const genDiff = expectedGen ? ((actualGen - expectedGen)/expectedGen*100).toFixed(2) : 0;
-    document.getElementById("genActual").innerText = actualGen.toLocaleString();
-    document.getElementById("genExpected").innerText = expectedGen.toLocaleString();
+    document.getElementById("genActual").innerText = Math.round(actualGen).toLocaleString();
+    document.getElementById("genExpected").innerText = Math.round(expectedGen).toLocaleString();
     const genDiffCell = document.getElementById("genDiff");
     genDiffCell.innerText = genDiff + "%";
     genDiffCell.className = genDiff>=0 ? "diff-positive":"diff-negative";
@@ -371,8 +385,8 @@ function updateComparisonTables() {
 
     // Exp Gen diff with Actual IR
     const expIRDiff = expGenWithIRExpected ? ((expGenWithIRActual - expGenWithIRExpected)/expGenWithIRExpected*100).toFixed(2):0;
-    document.getElementById("expIRActual").innerText = expGenWithIRActual.toLocaleString();
-    document.getElementById("expIRExpected").innerText = expGenWithIRExpected.toLocaleString();
+    document.getElementById("expIRActual").innerText = Math.round(expGenWithIRActual).toLocaleString();
+    document.getElementById("expIRExpected").innerText = Math.round(expGenWithIRExpected).toLocaleString();
     const expIRDiffCell = document.getElementById("expIRDiff");
     expIRDiffCell.innerText = expIRDiff+"%";
     expIRDiffCell.className = expIRDiff>=0 ? "diff-positive":"diff-negative";
@@ -415,4 +429,3 @@ function updateChart() {
 
 </body>
 </html>
-
