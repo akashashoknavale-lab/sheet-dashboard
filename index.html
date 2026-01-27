@@ -1,37 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Google Sheet Data</title>
+<meta charset="UTF-8">
+<title>Google Sheet Data (19 Columns)</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+
+th {
+  background: #4CAF50;
+  color: white;
+}
+</style>
 </head>
+
 <body>
 
-<h2>My Google Sheet Data</h2>
+<h2>My Google Sheet Data (Up to 19 Columns)</h2>
 
-<table border="1" id="table">
-<thead></thead>
-<tbody></tbody>
+<table id="table">
+  <thead></thead>
+  <tbody></tbody>
 </table>
 
 <script>
 const sheetURL =
-"https://docs.google.com/spreadsheets/d/1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg/gviz/tq?tqx=out:csv&sheet=0";
+"https://docs.google.com/spreadsheets/d/1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg/gviz/tq?tqx=out:csv&sheet=Sheet1";
+// 🔴 Replace Sheet1 with your actual tab name
+
+const MAX_COLUMNS = 19;
 
 fetch(sheetURL)
 .then(res => res.text())
 .then(csv => {
-  const rows = csv.split("\n");
+  const rows = csv.trim().split("\n");
+
+  const thead = document.querySelector("#table thead");
   const tbody = document.querySelector("#table tbody");
 
-  rows.slice(1).forEach(row => {
-    const cols = row.split(",");
-    tbody.innerHTML += `
-      <tr>
-        <td>${cols[0]}</td>
-        <td>${cols[1]}</td>
-        <td>${cols[2]}</td>
-      </tr>`;
+  // ---------- HEADER ----------
+  const headers = rows[0].split(",").slice(0, MAX_COLUMNS);
+  let headerHTML = "<tr>";
+  headers.forEach(h => {
+    headerHTML += `<th>${h.replace(/"/g, "")}</th>`;
   });
-});
+  headerHTML += "</tr>";
+  thead.innerHTML = headerHTML;
+
+  // ---------- DATA ----------
+  rows.slice(1).forEach(row => {
+    const cols = row.split(",").slice(0, MAX_COLUMNS);
+    let rowHTML = "<tr>";
+    cols.forEach(col => {
+      rowHTML += `<td>${col.replace(/"/g, "")}</td>`;
+    });
+    rowHTML += "</tr>";
+    tbody.innerHTML += rowHTML;
+  });
+})
+.catch(err => console.error("Sheet error:", err));
 </script>
 
 </body>
