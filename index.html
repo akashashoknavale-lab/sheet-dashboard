@@ -108,7 +108,7 @@ fetch(sheetURL)
 function buildFilters() {
 
   const plantIndex = 0; // 🔴 Plant Name column
-  const monthIndex = 2; // 🔴 Month column
+  const monthIndex = 1; // 🔴 Month column
 
   const plants = [...new Set(allData.map(r => r[plantIndex]))];
   const months = [...new Set(allData.map(r => r[monthIndex]))];
@@ -170,3 +170,4 @@ function renderTable() {
 
 </body>
 </html>
+
