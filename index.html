@@ -14,7 +14,7 @@ body {
     padding: 15px;
 }
 
-h2 { margin-bottom: 10px; }
+h2 { text-align: center; margin-bottom: 15px; }
 
 .filters {
     display: flex;
@@ -27,11 +27,10 @@ h2 { margin-bottom: 10px; }
 }
 
 .dropdown button {
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid #333;
     background: white;
     cursor: pointer;
-    font-size: 13px;
 }
 
 .dropdown-content {
@@ -41,7 +40,7 @@ h2 { margin-bottom: 10px; }
     border: 1px solid #ccc;
     max-height: 260px;
     overflow-y: auto;
-    padding: 6px;
+    padding: 8px;
     z-index: 10;
     width: 200px;
 }
@@ -52,19 +51,15 @@ h2 { margin-bottom: 10px; }
 
 .dropdown-content label {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     margin-bottom: 4px;
 }
 
-/* 🔹 SMALL SIZE ACTION BUTTONS */
 .action-btn {
-    font-size: 10px;
-    padding: 3px;
-    margin-bottom: 4px;
+    font-size: 12px;
+    margin-bottom: 6px;
     width: 100%;
     cursor: pointer;
-    border: 1px solid #aaa;
-    background: #eee;
 }
 
 canvas {
@@ -74,33 +69,41 @@ canvas {
     margin-bottom: 15px;
 }
 
-.summary {
-    background: white;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-.summary table {
+.comparison-table {
     width: 100%;
+    max-width: 600px;
+    margin: 10px auto;
     border-collapse: collapse;
+    background: white;
 }
 
-.summary th, .summary td {
+.comparison-table th, .comparison-table td {
     border: 1px solid #ccc;
     padding: 8px;
     text-align: center;
     font-size: 14px;
 }
 
-.summary th {
+.comparison-table th {
     background: #34495e;
     color: white;
+}
+
+.comparison-table .diff-positive {
+    background: #c8e6c9;
+    color: #256029;
+}
+
+.comparison-table .diff-negative {
+    background: #ffcccc;
+    color: #a50000;
 }
 
 .table-wrapper {
     max-height: 400px;
     overflow-y: auto;
     background: white;
+    margin-top: 15px;
 }
 
 table.data-table {
@@ -151,21 +154,48 @@ table.data-table {
 <!-- CHART -->
 <canvas id="barChart" width="400" height="150"></canvas>
 
-<!-- SUMMARY TABLE -->
-<div class="summary">
-<table>
-<tr>
-    <th>Actual Generation (MWh)</th>
-    <th>Expected Generation (MWh)</th>
-    <th>Difference (%)</th>
-</tr>
-<tr>
-    <td id="sumActual">0</td>
-    <td id="sumExpected">0</td>
-    <td id="avgDiff">0</td>
-</tr>
+<!-- COMPARISON TABLES -->
+<h3 style="text-align:center; color:red;">Total Generation</h3>
+<table class="comparison-table" id="genTable">
+    <tr>
+        <th>Actual</th>
+        <th>Expected</th>
+        <th>Diff</th>
+    </tr>
+    <tr>
+        <td id="genActual">0</td>
+        <td id="genExpected">0</td>
+        <td id="genDiff">0%</td>
+    </tr>
 </table>
-</div>
+
+<h3 style="text-align:center; color:purple;">Total IR (KWh/m²)</h3>
+<table class="comparison-table" id="irTable">
+    <tr>
+        <th>Actual</th>
+        <th>Expected</th>
+        <th>Diff</th>
+    </tr>
+    <tr>
+        <td id="irActual">0</td>
+        <td id="irExpected">0</td>
+        <td id="irDiff">0%</td>
+    </tr>
+</table>
+
+<h3 style="text-align:center; color:green;">Exp Gen diff with Actual IR</h3>
+<table class="comparison-table" id="expIRTable">
+    <tr>
+        <th>Actual</th>
+        <th>Expected</th>
+        <th>Diff</th>
+    </tr>
+    <tr>
+        <td id="expIRActual">0</td>
+        <td id="expIRExpected">0</td>
+        <td id="expIRDiff">0%</td>
+    </tr>
+</table>
 
 <!-- DATA TABLE -->
 <div class="table-wrapper">
@@ -176,14 +206,18 @@ table.data-table {
 </div>
 
 <script>
+// ================= SHEET DETAILS =================
 const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
 const GID = "0";
 const MAX_COLUMNS = 19;
 
+// Column index (0-based)
 const PLANT_COL = 0;
 const MONTH_COL = 1;
-const ACTUAL_COL = 3;
-const EXPECTED_COL = 4;
+const ACTUAL_COL = 3;    // kWh
+const EXPECTED_COL = 4;  // kWh
+const IR_ACTUAL_COL = 5; // Actual IR column index
+const IR_EXPECTED_COL = 6; // Expected IR column index
 
 let allData = [];
 let selectedPlants = new Set();
@@ -203,16 +237,29 @@ fetch(sheetURL)
     const headers = rows.shift();
     allData = rows;
 
-    document.querySelector("#dataTable thead").innerHTML =
-        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-
+    createHeader(headers);
     createFilters();
     updateView();
 });
 
+// ---------- HEADER ----------
+function createHeader(headers) {
+    document.querySelector("#dataTable thead").innerHTML =
+        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+}
+
+// ---------- FILTERS ----------
 function createFilters() {
-    [...new Set(allData.map(r => r[PLANT_COL]))].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-    [...new Set(allData.map(r => r[MONTH_COL]))].forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+    const plantSet = new Set();
+    const monthSet = new Set();
+
+    allData.forEach(r => {
+        plantSet.add(r[PLANT_COL]);
+        monthSet.add(r[MONTH_COL]);
+    });
+
+    plantSet.forEach(p => addCheckbox("plantFilter", p, selectedPlants));
+    monthSet.forEach(m => addCheckbox("monthFilter", m, selectedMonths));
 }
 
 function addCheckbox(containerId, value, set) {
@@ -234,11 +281,12 @@ function addCheckbox(containerId, value, set) {
     div.appendChild(label);
 }
 
+// ---------- SELECT / DESELECT ----------
 function selectAll(type) {
     const set = type === "plant" ? selectedPlants : selectedMonths;
-    document.querySelectorAll(`#${type}Filter input`).forEach(cb => {
+    document.querySelectorAll(`#${type}Filter input[type=checkbox]`).forEach(cb => {
         cb.checked = true;
-        set.add(cb.nextSibling.textContent.trim());
+        set.add(cb.parentNode.textContent.trim());
     });
     updateView();
 }
@@ -246,79 +294,124 @@ function selectAll(type) {
 function deselectAll(type) {
     const set = type === "plant" ? selectedPlants : selectedMonths;
     set.clear();
-    document.querySelectorAll(`#${type}Filter input`).forEach(cb => cb.checked = false);
+    document.querySelectorAll(`#${type}Filter input[type=checkbox]`).forEach(cb => {
+        cb.checked = false;
+    });
     updateView();
 }
 
+// ---------- UPDATE ----------
 function updateView() {
     updateTable();
     updateChart();
-    updateSummary();
+    updateComparisonTables();
 }
 
+// ---------- TABLE ----------
 function updateTable() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
-    allData.forEach(r => {
-        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            tbody.innerHTML += `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`;
-        }
-    });
-}
-
-function updateSummary() {
-    let a = 0, e = 0, d = 0, c = 0;
+    const frag = document.createDocumentFragment();
 
     allData.forEach(r => {
         if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            const ac = +r[ACTUAL_COL] || 0;
-            const ex = +r[EXPECTED_COL] || 0;
-            a += ac;
-            e += ex;
-            if (ex) { d += ((ac - ex) / ex) * 100; c++; }
+            const tr = document.createElement("tr");
+            r.forEach(c=> {
+                const td = document.createElement("td");
+                td.innerText = c;
+                tr.appendChild(td);
+            });
+            frag.appendChild(tr);
         }
     });
 
-    sumActual.innerText = (a / 1000).toFixed(2);
-    sumExpected.innerText = (e / 1000).toFixed(2);
-    avgDiff.innerText = c ? (d / c).toFixed(2) + " %" : "0 %";
+    tbody.appendChild(frag);
 }
 
+// ---------- COMPARISON TABLES ----------
+function updateComparisonTables() {
+    let actualGen=0, expectedGen=0;
+    let actualIR=0, expectedIR=0;
+    let expGenWithIRActual=0, expGenWithIRExpected=0;
+    let countIR=0;
+
+    allData.forEach(r => {
+        if(selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])){
+            const act = Number(r[ACTUAL_COL]) || 0;
+            const exp = Number(r[EXPECTED_COL]) || 0;
+            actualGen += act;
+            expectedGen += exp;
+
+            const irAct = Number(r[IR_ACTUAL_COL]) || 0;
+            const irExp = Number(r[IR_EXPECTED_COL]) || 0;
+            actualIR += irAct;
+            expectedIR += irExp;
+            countIR++;
+
+            const expIR = irAct > 0 ? act * (irExp/irAct) : act;
+            expGenWithIRActual += act;
+            expGenWithIRExpected += expIR;
+        }
+    });
+
+    // Total Generation Table
+    const genDiff = expectedGen ? ((actualGen - expectedGen)/expectedGen*100).toFixed(2) : 0;
+    document.getElementById("genActual").innerText = actualGen.toLocaleString();
+    document.getElementById("genExpected").innerText = expectedGen.toLocaleString();
+    const genDiffCell = document.getElementById("genDiff");
+    genDiffCell.innerText = genDiff + "%";
+    genDiffCell.className = genDiff>=0 ? "diff-positive":"diff-negative";
+
+    // Total IR Table
+    const avgIRActual = countIR? (actualIR/countIR).toFixed(2):0;
+    const avgIRExpected = countIR? (expectedIR/countIR).toFixed(2):0;
+    const irDiff = avgIRExpected ? ((avgIRActual - avgIRExpected)/avgIRExpected*100).toFixed(2):0;
+    document.getElementById("irActual").innerText = avgIRActual;
+    document.getElementById("irExpected").innerText = avgIRExpected;
+    const irDiffCell = document.getElementById("irDiff");
+    irDiffCell.innerText = irDiff+"%";
+    irDiffCell.className = irDiff>=0 ? "diff-positive":"diff-negative";
+
+    // Exp Gen diff with Actual IR Table
+    const expIRDiff = expGenWithIRExpected ? ((expGenWithIRActual - expGenWithIRExpected)/expGenWithIRExpected*100).toFixed(2):0;
+    document.getElementById("expIRActual").innerText = expGenWithIRActual.toLocaleString();
+    document.getElementById("expIRExpected").innerText = expGenWithIRExpected.toLocaleString();
+    const expIRDiffCell = document.getElementById("expIRDiff");
+    expIRDiffCell.innerText = expIRDiff+"%";
+    expIRDiffCell.className = expIRDiff>=0 ? "diff-positive":"diff-negative";
+}
+
+// ---------- CHART ----------
 function updateChart() {
-    const actual = {};
-    const expected = {};
+    const monthTotals = {};
 
     allData.forEach(r => {
         if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
             const m = r[MONTH_COL];
-            actual[m] = (actual[m] || 0) + (+r[ACTUAL_COL] || 0) / 1000;
-            expected[m] = (expected[m] || 0) + (+r[EXPECTED_COL] || 0) / 1000;
+            const gen = (Number(r[ACTUAL_COL]) || 0)/1000;
+            monthTotals[m] = (monthTotals[m] || 0) + gen;
         }
     });
 
-    if (chart) chart.destroy();
+    if(chart) chart.destroy();
 
-    chart = new Chart(barChart, {
+    chart = new Chart(document.getElementById("barChart"), {
         type: "bar",
         data: {
-            labels: Object.keys(actual),
-            datasets: [
-                { label: "Actual Generation (MWh)", data: Object.values(actual), barThickness: 14 },
-                { label: "Expected Generation (MWh)", data: Object.values(expected), barThickness: 14 }
-            ]
+            labels: Object.keys(monthTotals),
+            datasets:[{
+                label:"Actual Generation (MWh)",
+                data: Object.values(monthTotals),
+                backgroundColor:'#4caf50',
+                barThickness: 18
+            }]
         },
-        options: {
-            responsive: false,
-            plugins: {
-                title: {
-                    display: true,
-                    text: "Total Generation – Actual vs Expected (MWh)"
-                }
-            },
-            scales: {
-                x: { ticks: { font: { size: 8 } } },
-                y: { ticks: { font: { size: 12 } }, beginAtZero: true }
+        options:{
+            responsive:true,
+            scales:{
+                x:{ ticks:{ font:{ size:10 }}},
+                y:{ beginAtZero:true, ticks:{ font:{ size:12 }}}
             }
         }
     });
