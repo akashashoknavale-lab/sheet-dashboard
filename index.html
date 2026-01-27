@@ -53,6 +53,7 @@ h2 {
 .dropdown-content label {
     display: block;
     margin-bottom: 5px;
+    font-size: 13px;
 }
 
 canvas {
@@ -105,7 +106,8 @@ th {
     </div>
 </div>
 
-<canvas id="barChart" height="120"></canvas>
+<!-- 🔹 SMALL GRAPH (1/4 SIZE) -->
+<canvas id="barChart" width="400" height="150"></canvas>
 
 <div class="table-wrapper">
 <table id="dataTable">
@@ -120,7 +122,7 @@ const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
 const GID = "0";
 const MAX_COLUMNS = 19;
 
-// Column Index (0 based)
+// Column index (0-based)
 const PLANT_COL = 0;
 const MONTH_COL = 1;
 const ACTUAL_GEN_COL = 3;
@@ -138,7 +140,9 @@ fetch(sheetURL)
 .then(res => res.text())
 .then(csv => {
     const rows = csv.split("\n").map(r =>
-        r.split(",").slice(0, MAX_COLUMNS).map(c => c.replace(/"/g, "").trim())
+        r.split(",").slice(0, MAX_COLUMNS).map(c =>
+            c.replace(/"/g, "").trim()
+        )
     );
 
     const headers = rows.shift();
@@ -149,11 +153,13 @@ fetch(sheetURL)
     updateView();
 });
 
+// ---------- TABLE HEADER ----------
 function createHeader(headers) {
     document.querySelector("#dataTable thead").innerHTML =
         "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
 }
 
+// ---------- FILTERS ----------
 function createFilters() {
     const plantSet = new Set();
     const monthSet = new Set();
@@ -186,11 +192,13 @@ function addCheckbox(containerId, value, set) {
     div.appendChild(label);
 }
 
+// ---------- UPDATE VIEW ----------
 function updateView() {
     updateTable();
     updateChart();
 }
 
+// ---------- TABLE ----------
 function updateTable() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
@@ -202,13 +210,17 @@ function updateTable() {
     });
 }
 
+// ---------- CHART (MONTH WISE SUM) ----------
 function updateChart() {
-    const plantTotals = {};
+    const monthTotals = {};
 
     allData.forEach(r => {
-        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            plantTotals[r[PLANT_COL]] =
-                (plantTotals[r[PLANT_COL]] || 0) + Number(r[ACTUAL_GEN_COL] || 0);
+        const plant = r[PLANT_COL];
+        const month = r[MONTH_COL];
+        const gen = Number(r[ACTUAL_GEN_COL]) || 0;
+
+        if (selectedPlants.has(plant) && selectedMonths.has(month)) {
+            monthTotals[month] = (monthTotals[month] || 0) + gen;
         }
     });
 
@@ -217,16 +229,23 @@ function updateChart() {
     chart = new Chart(document.getElementById("barChart"), {
         type: "bar",
         data: {
-            labels: Object.keys(plantTotals),
+            labels: Object.keys(monthTotals),
             datasets: [{
-                label: "Actual Generation",
-                data: Object.values(plantTotals)
+                label: "Total Actual Generation",
+                data: Object.values(monthTotals),
+                barThickness: 18
             }]
         },
         options: {
-            responsive: true,
-            plugins: {
-                legend: { display: true }
+            responsive: false,
+            scales: {
+                x: {
+                    title: { display: true, text: "Month" }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: "Generation" }
+                }
             }
         }
     });
