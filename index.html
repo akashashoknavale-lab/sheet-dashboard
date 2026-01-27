@@ -2,22 +2,41 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Google Sheet Data (19 Columns)</title>
+<title>Sheet Dashboard</title>
 
 <style>
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
+  background: #f4f4f4;
+}
+
+.filters {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.filter-box {
+  background: white;
+  padding: 10px;
+  border: 1px solid #ccc;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.filter-box h4 {
+  margin: 0 0 10px 0;
 }
 
 table {
-  border-collapse: collapse;
   width: 100%;
-  font-size: 14px;
+  border-collapse: collapse;
+  background: white;
 }
 
 th, td {
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   padding: 6px;
   text-align: center;
 }
@@ -31,7 +50,24 @@ th {
 
 <body>
 
-<h2>My Google Sheet Data (Up to 19 Columns)</h2>
+<h2>Plant Generation Dashboard</h2>
+
+<!-- 🔹 FILTERS -->
+<div class="filters">
+
+  <!-- Plant Filter -->
+  <div class="filter-box">
+    <h4>Plant Name</h4>
+    <div id="plantFilter"></div>
+  </div>
+
+  <!-- Month Filter -->
+  <div class="filter-box">
+    <h4>Month</h4>
+    <div id="monthFilter"></div>
+  </div>
+
+</div>
 
 <table id="table">
   <thead></thead>
@@ -41,39 +77,95 @@ th {
 <script>
 const sheetURL =
 "https://docs.google.com/spreadsheets/d/1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg/gviz/tq?tqx=out:csv&sheet=Sheet1";
-// 🔴 Replace Sheet1 with your actual tab name
 
 const MAX_COLUMNS = 19;
+
+let allData = [];
+let selectedPlants = new Set();
+let selectedMonths = new Set();
 
 fetch(sheetURL)
 .then(res => res.text())
 .then(csv => {
   const rows = csv.trim().split("\n");
-
-  const thead = document.querySelector("#table thead");
-  const tbody = document.querySelector("#table tbody");
-
-  // ---------- HEADER ----------
   const headers = rows[0].split(",").slice(0, MAX_COLUMNS);
-  let headerHTML = "<tr>";
-  headers.forEach(h => {
-    headerHTML += `<th>${h.replace(/"/g, "")}</th>`;
-  });
-  headerHTML += "</tr>";
-  thead.innerHTML = headerHTML;
 
-  // ---------- DATA ----------
+  // HEADER
+  document.querySelector("#table thead").innerHTML =
+    `<tr>${headers.map(h => `<th>${h.replace(/"/g,"")}</th>`).join("")}</tr>`;
+
+  // DATA
   rows.slice(1).forEach(row => {
-    const cols = row.split(",").slice(0, MAX_COLUMNS);
-    let rowHTML = "<tr>";
-    cols.forEach(col => {
-      rowHTML += `<td>${col.replace(/"/g, "")}</td>`;
-    });
-    rowHTML += "</tr>";
-    tbody.innerHTML += rowHTML;
+    const cols = row.split(",").slice(0, MAX_COLUMNS).map(c => c.replace(/"/g,""));
+    allData.push(cols);
   });
-})
-.catch(err => console.error("Sheet error:", err));
+
+  buildFilters();
+  renderTable();
+});
+
+// 🔹 BUILD FILTER CHECKBOXES
+function buildFilters() {
+
+  const plantIndex = 0; // 🔴 Plant Name column
+  const monthIndex = 2; // 🔴 Month column
+
+  const plants = [...new Set(allData.map(r => r[plantIndex]))];
+  const months = [...new Set(allData.map(r => r[monthIndex]))];
+
+  const plantDiv = document.getElementById("plantFilter");
+  plants.forEach(p => {
+    plantDiv.innerHTML += `
+      <label>
+        <input type="checkbox" checked onchange="togglePlant('${p}', this.checked)">
+        ${p}
+      </label><br>
+    `;
+    selectedPlants.add(p);
+  });
+
+  const monthDiv = document.getElementById("monthFilter");
+  months.forEach(m => {
+    monthDiv.innerHTML += `
+      <label>
+        <input type="checkbox" checked onchange="toggleMonth('${m}', this.checked)">
+        ${m}
+      </label><br>
+    `;
+    selectedMonths.add(m);
+  });
+}
+
+// 🔹 TOGGLE FUNCTIONS
+function togglePlant(value, checked) {
+  checked ? selectedPlants.add(value) : selectedPlants.delete(value);
+  renderTable();
+}
+
+function toggleMonth(value, checked) {
+  checked ? selectedMonths.add(value) : selectedMonths.delete(value);
+  renderTable();
+}
+
+// 🔹 RENDER TABLE
+function renderTable() {
+  const tbody = document.querySelector("#table tbody");
+  tbody.innerHTML = "";
+
+  const plantIndex = 0;
+  const monthIndex = 2;
+
+  allData.forEach(row => {
+    if (
+      selectedPlants.has(row[plantIndex]) &&
+      selectedMonths.has(row[monthIndex])
+    ) {
+      tbody.innerHTML += `
+        <tr>${row.map(col => `<td>${col}</td>`).join("")}</tr>
+      `;
+    }
+  });
+}
 </script>
 
 </body>
