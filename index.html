@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Google Sheet Data</title>
+</head>
+<body>
+
+<h2>My Google Sheet Data</h2>
+
+<table border="1" id="table">
+<thead></thead>
+<tbody></tbody>
+</table>
+
+<script>
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg/gviz/tq?tqx=out:csv&sheet=0";
+
+fetch(sheetURL)
+.then(res => res.text())
+.then(csv => {
+  const rows = csv.split("\n");
+  const tbody = document.querySelector("#table tbody");
+
+  rows.slice(1).forEach(row => {
+    const cols = row.split(",");
+    tbody.innerHTML += `
+      <tr>
+        <td>${cols[0]}</td>
+        <td>${cols[1]}</td>
+        <td>${cols[2]}</td>
+      </tr>`;
+  });
+});
+</script>
+
+</body>
+</html>
