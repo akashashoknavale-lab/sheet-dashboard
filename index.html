@@ -27,8 +27,8 @@ h2 { text-align: center; margin-bottom: 15px; }
 }
 
 .dropdown button {
-    padding: 8px 12px;
-    border: 1px solid #333;
+    padding: 1px 5px;
+    border: 1px solid #9999;
     background: white;
     cursor: pointer;
 }
@@ -51,48 +51,48 @@ h2 { text-align: center; margin-bottom: 15px; }
 
 .dropdown-content label {
     display: block;
-    font-size: 13px;
-    margin-bottom: 4px;
+    font-size: 10px;
+    margin-bottom: 1px;
 }
 
 .action-btn {
-    font-size: 12px;
-    margin-bottom: 6px;
-    width: 100%;
+    font-size: 10px;
+    margin-bottom: 1px;
+    width: 40%;
     cursor: pointer;
 }
 
 .chart-container {
-    width: 50%; /* half size */
+    width: 30%; /* half size */
     margin: 0 auto 20px auto;
 }
 
 canvas {
     background: white;
-    padding: 10px;
-    border-radius: 6px;
+    padding: 1px;
+    border-radius: 10px;
 }
 
 /* Horizontal Comparison Tables */
 .comparison-container {
     display: flex;
-    gap: 10px;
-    justify-content: center;
+    gap: 9px;
+    justify-content: left;
     flex-wrap: wrap;
-    margin-bottom: 15px;
+    margin-bottom: 1px;
 }
 
 .comparison-table {
-    width: 200px;
+    width: 100px;
     border-collapse: collapse;
     background: white;
 }
 
 .comparison-table th, .comparison-table td {
     border: 1px solid #ccc;
-    padding: 8px;
+    padding:4px;
     text-align: center;
-    font-size: 14px;
+    font-size: 10px;
 }
 
 .comparison-table th {
@@ -114,7 +114,7 @@ canvas {
     max-height: 400px;
     overflow-y: auto;
     background: white;
-    margin-top: 15px;
+    margin-top: 5px;
 }
 
 table.data-table {
@@ -125,7 +125,7 @@ table.data-table {
 .data-table th, .data-table td {
     border: 1px solid #ccc;
     padding: 6px;
-    font-size: 13px;
+    font-size: 10px;
     text-align: center;
 }
 
@@ -140,7 +140,7 @@ table.data-table {
 
 <body>
 
-<h2>☀️ Solar Plant Performance Dashboard</h2>
+<h2>☀️ Captive Plant Solar Park 1 & 2</h2>
 
 <div class="filters">
     <!-- Plant Filter -->
@@ -164,7 +164,7 @@ table.data-table {
 
 <!-- CHART -->
 <div class="chart-container">
-<canvas id="barChart" width="400" height="150"></canvas>
+<canvas id="barChart" width="100" height="50"></canvas>
 </div>
 
 <!-- COMPARISON TABLES HORIZONTAL -->
@@ -415,3 +415,4 @@ function updateChart() {
 
 </body>
 </html>
+
