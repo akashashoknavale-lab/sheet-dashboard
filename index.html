@@ -27,10 +27,11 @@ h2 { margin-bottom: 10px; }
 }
 
 .dropdown button {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid #333;
     background: white;
     cursor: pointer;
+    font-size: 13px;
 }
 
 .dropdown-content {
@@ -40,7 +41,7 @@ h2 { margin-bottom: 10px; }
     border: 1px solid #ccc;
     max-height: 260px;
     overflow-y: auto;
-    padding: 8px;
+    padding: 6px;
     z-index: 10;
     width: 200px;
 }
@@ -51,15 +52,19 @@ h2 { margin-bottom: 10px; }
 
 .dropdown-content label {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     margin-bottom: 4px;
 }
 
+/* 🔹 SMALL SIZE ACTION BUTTONS */
 .action-btn {
-    font-size: 12px;
-    margin-bottom: 6px;
+    font-size: 10px;
+    padding: 3px;
+    margin-bottom: 4px;
     width: 100%;
     cursor: pointer;
+    border: 1px solid #aaa;
+    background: #eee;
 }
 
 canvas {
@@ -143,7 +148,7 @@ table.data-table {
     </div>
 </div>
 
-<!-- SMALL CHART -->
+<!-- CHART -->
 <canvas id="barChart" width="400" height="150"></canvas>
 
 <!-- SUMMARY TABLE -->
@@ -171,17 +176,14 @@ table.data-table {
 </div>
 
 <script>
-// ================= SHEET DETAILS =================
 const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
 const GID = "0";
 const MAX_COLUMNS = 19;
 
-// Column index (0-based)
 const PLANT_COL = 0;
 const MONTH_COL = 1;
-const ACTUAL_COL = 3;    // kWh
-const EXPECTED_COL = 4;  // kWh
-// ================================================
+const ACTUAL_COL = 3;
+const EXPECTED_COL = 4;
 
 let allData = [];
 let selectedPlants = new Set();
@@ -201,29 +203,16 @@ fetch(sheetURL)
     const headers = rows.shift();
     allData = rows;
 
-    createHeader(headers);
+    document.querySelector("#dataTable thead").innerHTML =
+        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
     createFilters();
     updateView();
 });
 
-// ---------- HEADER ----------
-function createHeader(headers) {
-    document.querySelector("#dataTable thead").innerHTML =
-        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-}
-
-// ---------- FILTERS ----------
 function createFilters() {
-    const plantSet = new Set();
-    const monthSet = new Set();
-
-    allData.forEach(r => {
-        plantSet.add(r[PLANT_COL]);
-        monthSet.add(r[MONTH_COL]);
-    });
-
-    plantSet.forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-    monthSet.forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+    [...new Set(allData.map(r => r[PLANT_COL]))].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
+    [...new Set(allData.map(r => r[MONTH_COL]))].forEach(m => addCheckbox("monthFilter", m, selectedMonths));
 }
 
 function addCheckbox(containerId, value, set) {
@@ -245,10 +234,9 @@ function addCheckbox(containerId, value, set) {
     div.appendChild(label);
 }
 
-// ---------- SELECT / DESELECT ----------
 function selectAll(type) {
     const set = type === "plant" ? selectedPlants : selectedMonths;
-    document.querySelectorAll(`#${type}Filter input[type=checkbox]`).forEach(cb => {
+    document.querySelectorAll(`#${type}Filter input`).forEach(cb => {
         cb.checked = true;
         set.add(cb.nextSibling.textContent.trim());
     });
@@ -258,20 +246,16 @@ function selectAll(type) {
 function deselectAll(type) {
     const set = type === "plant" ? selectedPlants : selectedMonths;
     set.clear();
-    document.querySelectorAll(`#${type}Filter input[type=checkbox]`).forEach(cb => {
-        cb.checked = false;
-    });
+    document.querySelectorAll(`#${type}Filter input`).forEach(cb => cb.checked = false);
     updateView();
 }
 
-// ---------- UPDATE ----------
 function updateView() {
     updateTable();
     updateChart();
     updateSummary();
 }
 
-// ---------- TABLE ----------
 function updateTable() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
@@ -283,67 +267,58 @@ function updateTable() {
     });
 }
 
-// ---------- SUMMARY ----------
 function updateSummary() {
-    let actualSum = 0;
-    let expectedSum = 0;
-    let diffTotal = 0;
-    let count = 0;
+    let a = 0, e = 0, d = 0, c = 0;
 
     allData.forEach(r => {
         if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            const actual = Number(r[ACTUAL_COL]) || 0;
-            const expected = Number(r[EXPECTED_COL]) || 0;
-
-            actualSum += actual;
-            expectedSum += expected;
-
-            if (expected > 0) {
-                diffTotal += ((actual - expected) / expected) * 100;
-                count++;
-            }
+            const ac = +r[ACTUAL_COL] || 0;
+            const ex = +r[EXPECTED_COL] || 0;
+            a += ac;
+            e += ex;
+            if (ex) { d += ((ac - ex) / ex) * 100; c++; }
         }
     });
 
-    document.getElementById("sumActual").innerText = (actualSum / 1000).toFixed(2);
-    document.getElementById("sumExpected").innerText = (expectedSum / 1000).toFixed(2);
-    document.getElementById("avgDiff").innerText =
-        count ? (diffTotal / count).toFixed(2) + " %" : "0 %";
+    sumActual.innerText = (a / 1000).toFixed(2);
+    sumExpected.innerText = (e / 1000).toFixed(2);
+    avgDiff.innerText = c ? (d / c).toFixed(2) + " %" : "0 %";
 }
 
-// ---------- CHART ----------
 function updateChart() {
-    const monthTotals = {};
+    const actual = {};
+    const expected = {};
 
     allData.forEach(r => {
         if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
             const m = r[MONTH_COL];
-            const gen = (Number(r[ACTUAL_COL]) || 0) / 1000;
-            monthTotals[m] = (monthTotals[m] || 0) + gen;
+            actual[m] = (actual[m] || 0) + (+r[ACTUAL_COL] || 0) / 1000;
+            expected[m] = (expected[m] || 0) + (+r[EXPECTED_COL] || 0) / 1000;
         }
     });
 
     if (chart) chart.destroy();
 
-    chart = new Chart(document.getElementById("barChart"), {
+    chart = new Chart(barChart, {
         type: "bar",
         data: {
-            labels: Object.keys(monthTotals),
-            datasets: [{
-                label: "Actual Generation (MWh)",
-                data: Object.values(monthTotals),
-                barThickness: 18
-            }]
+            labels: Object.keys(actual),
+            datasets: [
+                { label: "Actual Generation (MWh)", data: Object.values(actual), barThickness: 14 },
+                { label: "Expected Generation (MWh)", data: Object.values(expected), barThickness: 14 }
+            ]
         },
         options: {
             responsive: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Total Generation – Actual vs Expected (MWh)"
+                }
+            },
             scales: {
                 x: { ticks: { font: { size: 8 } } },
-                y: {
-                    beginAtZero: true,
-                    ticks: { font: { size: 12 } },
-                    title: { display: false }
-                }
+                y: { ticks: { font: { size: 12 } }, beginAtZero: true }
             }
         }
     });
