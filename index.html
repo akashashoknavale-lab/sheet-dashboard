@@ -77,7 +77,7 @@ table {
 th, td {
     border: 1px solid #ccc;
     padding: 6px;
-    font-size: 8px;
+    font-size: 13px;
     text-align: center;
 }
 
@@ -106,7 +106,7 @@ th {
     </div>
 </div>
 
-<!-- 🔹 SMALL GRAPH (1/4 SIZE) -->
+<!-- SMALL GRAPH -->
 <canvas id="barChart" width="400" height="150"></canvas>
 
 <div class="table-wrapper">
@@ -125,7 +125,7 @@ const MAX_COLUMNS = 19;
 // Column index (0-based)
 const PLANT_COL = 0;
 const MONTH_COL = 1;
-const ACTUAL_GEN_COL = 3;
+const ACTUAL_GEN_COL = 3; // kWh
 
 // ===================================================
 let allData = [];
@@ -210,17 +210,17 @@ function updateTable() {
     });
 }
 
-// ---------- CHART (MONTH WISE SUM) ----------
+// ---------- CHART (MONTH-WISE, MWh) ----------
 function updateChart() {
     const monthTotals = {};
 
     allData.forEach(r => {
         const plant = r[PLANT_COL];
         const month = r[MONTH_COL];
-        const gen = Number(r[ACTUAL_GEN_COL]) || 0;
+        const genMWh = (Number(r[ACTUAL_GEN_COL]) || 0) / 1000; // ✅ kWh → MWh
 
         if (selectedPlants.has(plant) && selectedMonths.has(month)) {
-            monthTotals[month] = (monthTotals[month] || 0) + gen;
+            monthTotals[month] = (monthTotals[month] || 0) + genMWh;
         }
     });
 
@@ -231,7 +231,7 @@ function updateChart() {
         data: {
             labels: Object.keys(monthTotals),
             datasets: [{
-                label: "Total Actual Generation",
+                label: "Actual Generation (MWh)",
                 data: Object.values(monthTotals),
                 barThickness: 18
             }]
@@ -240,11 +240,18 @@ function updateChart() {
             responsive: false,
             scales: {
                 x: {
-                    title: { display: true, text: "Month" }
+                    ticks: {
+                        font: { size: 8 } // ✅ month name size
+                    }
                 },
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: "Generation" }
+                    ticks: {
+                        font: { size: 12 } // ✅ Y-axis value size
+                    },
+                    title: {
+                        display: false // ✅ removed Y-axis title
+                    }
                 }
             }
         }
@@ -254,4 +261,3 @@ function updateChart() {
 
 </body>
 </html>
-
