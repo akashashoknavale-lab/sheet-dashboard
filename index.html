@@ -43,7 +43,7 @@ h2 { text-align: center; margin-bottom: 15px; }
     overflow-y: auto;
     padding: 8px;
     z-index: 10;
-    width: 200px;
+    width: 220px;
 }
 
 .dropdown:hover .dropdown-content {
@@ -58,31 +58,29 @@ h2 { text-align: center; margin-bottom: 15px; }
 
 .action-btn {
     font-size: 12px;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     width: 48%;
     cursor: pointer;
 }
 
-/* Top section: tables + chart */
+/* Top section */
 .top-container {
     display: flex;
-    justify-content: space-between; /* tables left, chart right */
+    justify-content: space-between;
     align-items: flex-start;
     gap: 15px;
     margin-bottom: 20px;
 }
 
-/* Comparison tables stack horizontally */
 .comparison-container {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-/* Chart container on top-right */
+/* Chart */
 .chart-container {
     width: 35%;
-    align-self: flex-start;
 }
 
 canvas {
@@ -93,14 +91,15 @@ canvas {
 
 /* Comparison tables */
 .comparison-table {
-    width: 120px;
+    width: 140px;
     border-collapse: collapse;
     background: white;
 }
 
-.comparison-table th, .comparison-table td {
+.comparison-table th,
+.comparison-table td {
     border: 1px solid #ccc;
-    padding:4px;
+    padding: 4px;
     text-align: center;
     font-size: 10px;
 }
@@ -110,12 +109,12 @@ canvas {
     color: white;
 }
 
-.comparison-table .diff-positive {
+.diff-positive {
     background: #c8e6c9;
     color: #256029;
 }
 
-.comparison-table .diff-negative {
+.diff-negative {
     background: #ffcccc;
     color: #a50000;
 }
@@ -125,15 +124,15 @@ canvas {
     max-height: 400px;
     overflow-y: auto;
     background: white;
-    margin-top: 5px;
 }
 
-table.data-table {
+.data-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.data-table th, .data-table td {
+.data-table th,
+.data-table td {
     border: 1px solid #ccc;
     padding: 6px;
     font-size: 10px;
@@ -154,7 +153,6 @@ table.data-table {
 <h2>☀️ Captive Plant Solar Park 1 & 2</h2>
 
 <div class="filters">
-    <!-- Plant Filter -->
     <div class="dropdown">
         <button>Select Plant</button>
         <div class="dropdown-content" id="plantFilter">
@@ -163,7 +161,6 @@ table.data-table {
         </div>
     </div>
 
-    <!-- Month Filter -->
     <div class="dropdown">
         <button>Select Month</button>
         <div class="dropdown-content" id="monthFilter">
@@ -173,13 +170,15 @@ table.data-table {
     </div>
 </div>
 
-<!-- TOP SECTION: Comparison Tables + Chart -->
+<!-- TOP SECTION -->
 <div class="top-container">
-    <!-- Comparison Tables -->
+
     <div class="comparison-container">
+
+        <!-- Generation -->
         <div>
-            <h4 style="text-align:center; color:red;">Total Generation</h4>
-            <table class="comparison-table" id="genTable">
+            <h4 style="text-align:center;color:red;">Total Generation</h4>
+            <table class="comparison-table">
                 <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
                 <tr>
                     <td id="genActual">0</td>
@@ -189,9 +188,10 @@ table.data-table {
             </table>
         </div>
 
+        <!-- IR -->
         <div>
-            <h4 style="text-align:center; color:purple;">Total IR (KWh/m²)</h4>
-            <table class="comparison-table" id="irTable">
+            <h4 style="text-align:center;color:purple;">Avg IR (kWh/m²)</h4>
+            <table class="comparison-table">
                 <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
                 <tr>
                     <td id="irActual">0</td>
@@ -201,22 +201,33 @@ table.data-table {
             </table>
         </div>
 
+        <!-- PR & CUF -->
         <div>
-            <h4 style="text-align:center; color:green;">Exp Gen diff with Actual IR</h4>
-            <table class="comparison-table" id="expIRTable">
-                <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
+            <h4 style="text-align:center;color:green;">Avg PR % & CUF %</h4>
+            <table class="comparison-table">
                 <tr>
-                    <td id="expIRActual">0</td>
-                    <td id="expIRExpected">0</td>
-                    <td id="expIRDiff">0%</td>
+                    <th></th>
+                    <th>PR %</th>
+                    <th>CUF %</th>
+                </tr>
+                <tr>
+                    <th>Actual</th>
+                    <td id="prActual">0%</td>
+                    <td id="cufActual">0%</td>
+                </tr>
+                <tr>
+                    <th>Expected</th>
+                    <td id="prExpected">0%</td>
+                    <td id="cufExpected">0%</td>
                 </tr>
             </table>
         </div>
+
     </div>
 
     <!-- Chart -->
     <div class="chart-container">
-        <canvas id="barChart" width="100" height="50"></canvas>
+        <canvas id="barChart"></canvas>
     </div>
 </div>
 
@@ -229,10 +240,9 @@ table.data-table {
 </div>
 
 <script>
-// ================= SHEET DETAILS =================
+// ===== SHEET CONFIG =====
 const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
 const GID = "0";
-const MAX_COLUMNS = 19;
 
 const PLANT_COL = 0;
 const MONTH_COL = 1;
@@ -240,189 +250,109 @@ const ACTUAL_COL = 3;
 const EXPECTED_COL = 4;
 const IR_ACTUAL_COL = 5;
 const IR_EXPECTED_COL = 6;
+const PR_COL = 7;
+const PR_EXP_COL = 8;
+const CUF_COL = 10;
+const CUF_EXP_COL = 11;
 
 let allData = [];
 let selectedPlants = new Set();
 let selectedMonths = new Set();
 let chart;
 
-const sheetURL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
-
-fetch(sheetURL)
-.then(res => res.text())
+fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`)
+.then(r => r.text())
 .then(csv => {
-    const rows = csv.split("\n").map(r =>
-        r.split(",").slice(0, MAX_COLUMNS).map(c => c.replace(/"/g, "").trim())
-    );
-
+    const rows = csv.split("\n").map(r => r.split(",").map(c => c.replace(/"/g,"").trim()));
     const headers = rows.shift();
     allData = rows;
-
-    createHeader(headers);
+    document.querySelector("#dataTable thead").innerHTML =
+        "<tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr>";
     createFilters();
     updateView();
 });
 
-function createHeader(headers) {
-    document.querySelector("#dataTable thead").innerHTML =
-        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+function createFilters(){
+    [...new Set(allData.map(r=>r[PLANT_COL]))].forEach(v=>addCB("plantFilter",v,selectedPlants));
+    [...new Set(allData.map(r=>r[MONTH_COL]))].forEach(v=>addCB("monthFilter",v,selectedMonths));
 }
 
-function createFilters() {
-    const plantSet = new Set();
-    const monthSet = new Set();
-
-    allData.forEach(r => {
-        plantSet.add(r[PLANT_COL]);
-        monthSet.add(r[MONTH_COL]);
-    });
-
-    plantSet.forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-    monthSet.forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+function addCB(id,val,set){
+    const l=document.createElement("label");
+    const c=document.createElement("input");
+    c.type="checkbox"; c.checked=true; set.add(val);
+    c.onchange=()=>{c.checked?set.add(val):set.delete(val);updateView();};
+    l.append(c," "+val);
+    document.getElementById(id).appendChild(l);
 }
 
-function addCheckbox(containerId, value, set) {
-    const div = document.getElementById(containerId);
-    const label = document.createElement("label");
-    const cb = document.createElement("input");
-
-    cb.type = "checkbox";
-    cb.checked = true;
-    set.add(value);
-
-    cb.onchange = () => {
-        cb.checked ? set.add(value) : set.delete(value);
-        updateView();
-    };
-
-    label.appendChild(cb);
-    label.append(" " + value);
-    div.appendChild(label);
-}
-
-function selectAll(type) {
-    const set = type === "plant" ? selectedPlants : selectedMonths;
-    document.querySelectorAll(`#${type}Filter input[type=checkbox]`).forEach(cb => {
-        cb.checked = true;
-        set.add(cb.parentNode.textContent.trim());
+function selectAll(t){
+    const s=t==="plant"?selectedPlants:selectedMonths;
+    document.querySelectorAll(`#${t}Filter input`).forEach(cb=>{
+        cb.checked=true; s.add(cb.parentNode.textContent.trim());
     });
     updateView();
 }
-
-function deselectAll(type) {
-    const set = type === "plant" ? selectedPlants : selectedMonths;
-    set.clear();
-    document.querySelectorAll(`#${type}Filter input[type=checkbox]`).forEach(cb => {
-        cb.checked = false;
-    });
+function deselectAll(t){
+    const s=t==="plant"?selectedPlants:selectedMonths;
+    s.clear();
+    document.querySelectorAll(`#${t}Filter input`).forEach(cb=>cb.checked=false);
     updateView();
 }
 
-function updateView() {
+function updateView(){
     updateTable();
     updateChart();
-    updateComparisonTables();
+    updateSummary();
 }
 
-function updateTable() {
-    const tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = "";
-    const frag = document.createDocumentFragment();
+function updateTable(){
+    const tb=document.querySelector("#dataTable tbody");
+    tb.innerHTML="";
+    allData.forEach(r=>{
+        if(selectedPlants.has(r[PLANT_COL])&&selectedMonths.has(r[MONTH_COL])){
+            tb.innerHTML+="<tr>"+r.map(c=>`<td>${c}</td>`).join("")+"</tr>";
+        }
+    });
+}
 
-    allData.forEach(r => {
-        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            const tr = document.createElement("tr");
-            r.forEach(c=> { const td=document.createElement("td"); td.innerText=c; tr.appendChild(td); });
-            frag.appendChild(tr);
+function updateSummary(){
+    let ag=0,eg=0,irA=0,irE=0,prA=0,prE=0,cufA=0,cufE=0,c=0;
+
+    allData.forEach(r=>{
+        if(selectedPlants.has(r[PLANT_COL])&&selectedMonths.has(r[MONTH_COL])){
+            ag+=+r[ACTUAL_COL]||0; eg+=+r[EXPECTED_COL]||0;
+            irA+=+r[IR_ACTUAL_COL]||0; irE+=+r[IR_EXPECTED_COL]||0;
+            prA+=+r[PR_COL]||0; prE+=+r[PR_EXP_COL]||0;
+            cufA+=+r[CUF_COL]||0; cufE+=+r[CUF_EXP_COL]||0;
+            c++;
         }
     });
 
-    tbody.appendChild(frag);
+    document.getElementById("genActual").innerText=Math.round(ag).toLocaleString();
+    document.getElementById("genExpected").innerText=Math.round(eg).toLocaleString();
+    document.getElementById("genDiff").innerText=eg?(((ag-eg)/eg)*100).toFixed(2)+"%":"0%";
+
+    document.getElementById("irActual").innerText=(irA/c).toFixed(2);
+    document.getElementById("irExpected").innerText=(irE/c).toFixed(2);
+
+    document.getElementById("prActual").innerText=(prA/c).toFixed(2)+"%";
+    document.getElementById("prExpected").innerText=(prE/c).toFixed(2)+"%";
+    document.getElementById("cufActual").innerText=(cufA/c).toFixed(2)+"%";
+    document.getElementById("cufExpected").innerText=(cufE/c).toFixed(2)+"%";
 }
 
-function updateComparisonTables() {
-    let actualGen=0, expectedGen=0;
-    let actualIR=0, expectedIR=0;
-    let expGenWithIRActual=0, expGenWithIRExpected=0;
-    let countIR=0;
-
-    allData.forEach(r => {
-        if(selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])){
-            const act = Number(r[ACTUAL_COL]) || 0;
-            const exp = Number(r[EXPECTED_COL]) || 0;
-            actualGen += act;
-            expectedGen += exp;
-
-            const irAct = Number(r[IR_ACTUAL_COL]) || 0;
-            const irExp = Number(r[IR_EXPECTED_COL]) || 0;
-            actualIR += irAct;
-            expectedIR += irExp;
-            countIR++;
-
-            const expIR = irAct > 0 ? act * (irExp/irAct) : act;
-            expGenWithIRActual += act;
-            expGenWithIRExpected += expIR;
+function updateChart(){
+    const m={};
+    allData.forEach(r=>{
+        if(selectedPlants.has(r[PLANT_COL])&&selectedMonths.has(r[MONTH_COL])){
+            m[r[MONTH_COL]]=(m[r[MONTH_COL]]||0)+(+r[ACTUAL_COL]||0)/1000;
         }
     });
-
-    // Total Generation
-    const genDiff = expectedGen ? ((actualGen - expectedGen)/expectedGen*100).toFixed(2) : 0;
-    document.getElementById("genActual").innerText = Math.round(actualGen).toLocaleString();
-    document.getElementById("genExpected").innerText = Math.round(expectedGen).toLocaleString();
-    const genDiffCell = document.getElementById("genDiff");
-    genDiffCell.innerText = genDiff + "%";
-    genDiffCell.className = genDiff>=0 ? "diff-positive":"diff-negative";
-
-    // Total IR
-    const avgIRActual = countIR? (actualIR/countIR).toFixed(2):0;
-    const avgIRExpected = countIR? (expectedIR/countIR).toFixed(2):0;
-    const irDiff = avgIRExpected ? ((avgIRActual - avgIRExpected)/avgIRExpected*100).toFixed(2):0;
-    document.getElementById("irActual").innerText = avgIRActual;
-    document.getElementById("irExpected").innerText = avgIRExpected;
-    const irDiffCell = document.getElementById("irDiff");
-    irDiffCell.innerText = irDiff+"%";
-    irDiffCell.className = irDiff>=0 ? "diff-positive":"diff-negative";
-
-    // Exp Gen diff with Actual IR
-    const expIRDiff = expGenWithIRExpected ? ((expGenWithIRActual - expGenWithIRExpected)/expGenWithIRExpected*100).toFixed(2):0;
-    document.getElementById("expIRActual").innerText = Math.round(expGenWithIRActual).toLocaleString();
-    document.getElementById("expIRExpected").innerText = Math.round(expGenWithIRExpected).toLocaleString();
-    const expIRDiffCell = document.getElementById("expIRDiff");
-    expIRDiffCell.innerText = expIRDiff+"%";
-    expIRDiffCell.className = expIRDiff>=0 ? "diff-positive":"diff-negative";
-}
-
-function updateChart() {
-    const monthTotals = {};
-
-    allData.forEach(r => {
-        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            const m = r[MONTH_COL];
-            const gen = (Number(r[ACTUAL_COL]) || 0)/1000;
-            monthTotals[m] = (monthTotals[m] || 0) + gen;
-        }
-    });
-
     if(chart) chart.destroy();
-
-    chart = new Chart(document.getElementById("barChart"), {
-        type: "bar",
-        data: {
-            labels: Object.keys(monthTotals),
-            datasets:[{
-                label:"Actual Generation (MWh)",
-                data: Object.values(monthTotals),
-                backgroundColor:'#4caf50',
-                barThickness: 18
-            }]
-        },
-        options:{
-            responsive:true,
-            scales:{
-                x:{ ticks:{ font:{ size:10 }}},
-                y:{ beginAtZero:true, ticks:{ font:{ size:12 }}}
-            }
-        }
+    chart=new Chart(barChart,{type:"bar",
+        data:{labels:Object.keys(m),datasets:[{label:"Actual Gen (MWh)",data:Object.values(m),backgroundColor:"#4caf50"}]},
+        options:{responsive:true}
     });
 }
 </script>
