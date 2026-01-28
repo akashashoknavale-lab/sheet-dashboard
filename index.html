@@ -196,6 +196,12 @@
             min-width: 120px;
             /* Avg CUF */
         }
+    /* Limit big data table to first 18 columns only */
+        .data-table th:nth-child(n+19),
+        .data-table td:nth-child(n+19) {
+        display: none;
+        }
+
     </style>
 </head>
 
@@ -480,10 +486,10 @@
                     eg += +r[EXPECTED_COL] || 0;
                     ai += +r[IR_ACTUAL_COL] || 0;
                     ei += +r[IR_EXPECTED_COL] || 0;
-                    prA += +r[PR_ACTUAL_COL] || 0;
-                    prE += +r[PR_EXPECTED_COL] || 0;
-                    cufA += +r[CUF_ACTUAL_COL] || 0;
-                    cufE += +r[CUF_EXPECTED_COL] || 0;
+                    prA  += parseFloat(r[PR_ACTUAL_COL]) || 0;
+                    prE  += parseFloat(r[PR_EXPECTED_COL]) || 0;
+                    cufA += parseFloat(r[CUF_ACTUAL_COL]) || 0;
+                    cufE += parseFloat(r[CUF_EXPECTED_COL]) || 0;
                     expIRAct += +r[ACTUAL_COL] || 0;
                     expIRExp += +r[ACTUAL_COL] * (+r[IR_EXPECTED_COL] / (+r[IR_ACTUAL_COL] || 1));
                     plantAvailSum += +r[PLANT_AVAIL_COL] || 0;
@@ -508,10 +514,12 @@
             expIRExpected.innerText = Math.round(expIRExp).toLocaleString();
             expIRDiff.innerText = ((expIRAct - expIRExp) / expIRExp * 100).toFixed(2) + "%";
 
-            prActual.innerText = (prA / c).toFixed(2) + "%";
-            prExpected.innerText = (prE / c).toFixed(2) + "%";
-            cufActual.innerText = (cufA / c).toFixed(2) + "%";
-            cufExpected.innerText = (cufE / c).toFixed(2) + "%";
+            prActual.innerText  = c ? (prA / c).toFixed(2) + "%" : "0%";
+            prExpected.innerText = c ? (prE / c).toFixed(2) + "%" : "0%";
+            
+            cufActual.innerText  = c ? (cufA / c).toFixed(2) + "%" : "0%";
+            cufExpected.innerText = c ? (cufE / c).toFixed(2) + "%" : "0%";
+
         }
 
         function updateMonthlySummary() {
