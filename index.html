@@ -22,9 +22,7 @@ h2 { text-align: center; margin-bottom: 15px; }
     margin-bottom: 15px;
 }
 
-.dropdown {
-    position: relative;
-}
+.dropdown { position: relative; }
 
 .dropdown button {
     padding: 3px 6px;
@@ -46,9 +44,7 @@ h2 { text-align: center; margin-bottom: 15px; }
     width: 200px;
 }
 
-.dropdown:hover .dropdown-content {
-    display: block;
-}
+.dropdown:hover .dropdown-content { display: block; }
 
 .dropdown-content label {
     display: block;
@@ -63,11 +59,9 @@ h2 { text-align: center; margin-bottom: 15px; }
     cursor: pointer;
 }
 
-/* Top section */
 .top-container {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -78,25 +72,26 @@ h2 { text-align: center; margin-bottom: 15px; }
     flex-wrap: wrap;
 }
 
-.chart-container {
+.chart-grid {
     width: 35%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
-canvas {
+.chart-grid canvas {
     background: white;
     padding: 5px;
     border-radius: 10px;
 }
 
-/* Comparison tables */
 .comparison-table {
-    width: 140px;
+    width: 120px;
     border-collapse: collapse;
     background: white;
 }
 
-.comparison-table th,
-.comparison-table td {
+.comparison-table th, .comparison-table td {
     border: 1px solid #ccc;
     padding: 4px;
     text-align: center;
@@ -108,17 +103,9 @@ canvas {
     color: white;
 }
 
-.diff-positive {
-    background: #c8e6c9;
-    color: #256029;
-}
+.diff-positive { background:#c8e6c9; }
+.diff-negative { background:#ffcccc; }
 
-.diff-negative {
-    background: #ffcccc;
-    color: #a50000;
-}
-
-/* DATA TABLE */
 .table-wrapper {
     max-height: 400px;
     overflow-y: auto;
@@ -130,8 +117,7 @@ canvas {
     border-collapse: collapse;
 }
 
-.data-table th,
-.data-table td {
+.data-table th, .data-table td {
     border: 1px solid #ccc;
     padding: 6px;
     font-size: 10px;
@@ -169,61 +155,59 @@ canvas {
     </div>
 </div>
 
-<!-- TOP SECTION -->
 <div class="top-container">
 
+<!-- ===== COMPARISON TABLES (UNCHANGED) ===== -->
 <div class="comparison-container">
 
-<!-- TABLE 1 -->
 <div>
 <h4 style="text-align:center;color:red;">Total Generation</h4>
 <table class="comparison-table">
 <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
-<tr>
-<td id="genActual">0</td>
-<td id="genExpected">0</td>
-<td id="genDiff">0%</td>
-</tr>
-</table>
-
-<!-- 🔹 NEW TABLE BELOW TABLE-1 -->
-<h4 style="text-align:center;color:#2c3e50;">Avg PR %</h4>
-<table class="comparison-table">
-<tr><th>Actual</th><th>Expected</th></tr>
-<tr>
-<td id="prActual">0%</td>
-<td id="prExpected">0%</td>
-</tr>
+<tr><td id="genActual">0</td><td id="genExpected">0</td><td id="genDiff">0%</td></tr>
 </table>
 </div>
 
-<!-- TABLE 2 -->
 <div>
-<h4 style="text-align:center;color:purple;">Total IR (kWh/m²)</h4>
+<h4 style="text-align:center;color:purple;">Total IR</h4>
 <table class="comparison-table">
 <tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
-<tr>
-<td id="irActual">0</td>
-<td id="irExpected">0</td>
-<td id="irDiff">0%</td>
-</tr>
+<tr><td id="irActual">0</td><td id="irExpected">0</td><td id="irDiff">0%</td></tr>
 </table>
+</div>
 
-<!-- 🔹 NEW TABLE BELOW TABLE-2 -->
-<h4 style="text-align:center;color:#2c3e50;">Avg CUF %</h4>
+<div>
+<h4 style="text-align:center;color:green;">Exp Gen diff with Actual IR</h4>
+<table class="comparison-table">
+<tr><th>Actual</th><th>Expected</th><th>Diff</th></tr>
+<tr><td id="expIRActual">0</td><td id="expIRExpected">0</td><td id="expIRDiff">0%</td></tr>
+</table>
+</div>
+
+<div>
+<h4 style="text-align:center;color:#e74c3c;">Avg PR%</h4>
 <table class="comparison-table">
 <tr><th>Actual</th><th>Expected</th></tr>
-<tr>
-<td id="cufActual">0%</td>
-<td id="cufExpected">0%</td>
-</tr>
+<tr><td id="prActual">0%</td><td id="prExpected">0%</td></tr>
+</table>
+</div>
+
+<div>
+<h4 style="text-align:center;color:#2980b9;">Avg CUF%</h4>
+<table class="comparison-table">
+<tr><th>Actual</th><th>Expected</th></tr>
+<tr><td id="cufActual">0%</td><td id="cufExpected">0%</td></tr>
 </table>
 </div>
 
 </div>
 
-<div class="chart-container">
-<canvas id="barChart"></canvas>
+<!-- ===== CHARTS ===== -->
+<div class="chart-grid">
+    <canvas id="barChart"></canvas>
+    <canvas id="pieGen"></canvas>
+    <canvas id="piePR"></canvas>
+    <canvas id="pieCUF"></canvas>
 </div>
 
 </div>
@@ -236,124 +220,134 @@ canvas {
 </div>
 
 <script>
-const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
-const GID = "0";
+const SHEET_ID="1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
+const GID="0";
 
-const PLANT_COL = 0;
-const MONTH_COL = 1;
-const ACTUAL_COL = 3;
-const EXPECTED_COL = 4;
-const IR_ACTUAL_COL = 5;
-const IR_EXPECTED_COL = 6;
-const PR_COL = 7;
-const PR_EXP_COL = 8;
-const CUF_COL = 10;
-const CUF_EXP_COL = 11;
+const PLANT_COL=0, MONTH_COL=1, ACTUAL_COL=3, EXPECTED_COL=4,
+      IR_ACTUAL_COL=5, IR_EXPECTED_COL=6,
+      PR_ACTUAL_COL=8, PR_EXPECTED_COL=9,
+      CUF_ACTUAL_COL=10, CUF_EXPECTED_COL=11;
 
-let allData = [];
-let selectedPlants = new Set();
-let selectedMonths = new Set();
-let chart;
+let allData=[], selectedPlants=new Set(), selectedMonths=new Set();
+let barChart, pieGen, piePR, pieCUF;
 
 fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`)
 .then(r=>r.text())
 .then(csv=>{
-const rows=csv.split("\n").map(r=>r.split(",").map(c=>c.replace(/"/g,"").trim()));
-const headers=rows.shift();
-allData=rows;
-document.querySelector("#dataTable thead").innerHTML="<tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr>";
-createFilters();
-updateView();
+    const rows=csv.split("\n").map(r=>r.split(",").map(c=>c.replace(/"/g,"").trim()));
+    const headers=rows.shift();
+    allData=rows;
+    document.querySelector("#dataTable thead").innerHTML="<tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr>";
+    createFilters();
+    updateView();
 });
 
 function createFilters(){
-[...new Set(allData.map(r=>r[PLANT_COL]))].forEach(v=>addCB("plantFilter",v,selectedPlants));
-[...new Set(allData.map(r=>r[MONTH_COL]))].forEach(v=>addCB("monthFilter",v,selectedMonths));
+    [...new Set(allData.map(r=>r[PLANT_COL]))].forEach(p=>addCheckbox("plantFilter",p,selectedPlants));
+    [...new Set(allData.map(r=>r[MONTH_COL]))].forEach(m=>addCheckbox("monthFilter",m,selectedMonths));
 }
 
-function addCB(id,val,set){
-const l=document.createElement("label");
-const c=document.createElement("input");
-c.type="checkbox";c.checked=true;set.add(val);
-c.onchange=()=>{c.checked?set.add(val):set.delete(val);updateView();};
-l.append(c," "+val);
-document.getElementById(id).appendChild(l);
+function addCheckbox(id,val,set){
+    const l=document.createElement("label");
+    const c=document.createElement("input");
+    c.type="checkbox"; c.checked=true; set.add(val);
+    c.onchange=()=>{c.checked?set.add(val):set.delete(val);updateView();};
+    l.appendChild(c); l.append(" "+val);
+    document.getElementById(id).appendChild(l);
 }
 
 function selectAll(t){
-const s=t==="plant"?selectedPlants:selectedMonths;
-document.querySelectorAll(`#${t}Filter input`).forEach(cb=>{
-cb.checked=true;s.add(cb.parentNode.textContent.trim());
-});
-updateView();
+    const s=t==="plant"?selectedPlants:selectedMonths;
+    document.querySelectorAll(`#${t}Filter input`).forEach(c=>{c.checked=true;s.add(c.parentNode.textContent.trim())});
+    updateView();
 }
-
 function deselectAll(t){
-const s=t==="plant"?selectedPlants:selectedMonths;
-s.clear();
-document.querySelectorAll(`#${t}Filter input`).forEach(cb=>cb.checked=false);
-updateView();
+    const s=t==="plant"?selectedPlants:selectedMonths;
+    s.clear();
+    document.querySelectorAll(`#${t}Filter input`).forEach(c=>c.checked=false);
+    updateView();
 }
 
 function updateView(){
-updateTable();
-updateChart();
-updateSummary();
+    updateTable();
+    updateComparison();
+    updateCharts();
 }
 
 function updateTable(){
-const tb=document.querySelector("#dataTable tbody");
-tb.innerHTML="";
-allData.forEach(r=>{
-if(selectedPlants.has(r[PLANT_COL])&&selectedMonths.has(r[MONTH_COL])){
-tb.innerHTML+="<tr>"+r.map(c=>`<td>${c}</td>`).join("")+"</tr>";
-}
-});
-}
-
-function updateSummary(){
-let ag=0,eg=0,irA=0,irE=0,prA=0,prE=0,cufA=0,cufE=0,c=0;
-
-allData.forEach(r=>{
-if(selectedPlants.has(r[PLANT_COL])&&selectedMonths.has(r[MONTH_COL])){
-ag+=+r[ACTUAL_COL]||0;
-eg+=+r[EXPECTED_COL]||0;
-irA+=+r[IR_ACTUAL_COL]||0;
-irE+=+r[IR_EXPECTED_COL]||0;
-prA+=+r[PR_COL]||0;
-prE+=+r[PR_EXP_COL]||0;
-cufA+=+r[CUF_COL]||0;
-cufE+=+r[CUF_EXP_COL]||0;
-c++;
-}
-});
-
-document.getElementById("genActual").innerText=Math.round(ag).toLocaleString();
-document.getElementById("genExpected").innerText=Math.round(eg).toLocaleString();
-document.getElementById("genDiff").innerText=eg?(((ag-eg)/eg)*100).toFixed(2)+"%":"0%";
-
-document.getElementById("irActual").innerText=(irA/c).toFixed(2);
-document.getElementById("irExpected").innerText=(irE/c).toFixed(2);
-document.getElementById("irDiff").innerText=irE?(((irA-irE)/irE)*100).toFixed(2)+"%":"0%";
-
-document.getElementById("prActual").innerText=(prA/c).toFixed(2)+"%";
-document.getElementById("prExpected").innerText=(prE/c).toFixed(2)+"%";
-document.getElementById("cufActual").innerText=(cufA/c).toFixed(2)+"%";
-document.getElementById("cufExpected").innerText=(cufE/c).toFixed(2)+"%";
+    const tb=document.querySelector("#dataTable tbody");
+    tb.innerHTML="";
+    allData.forEach(r=>{
+        if(selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])){
+            const tr=document.createElement("tr");
+            r.forEach(c=>{const td=document.createElement("td");td.innerText=c;tr.appendChild(td)});
+            tb.appendChild(tr);
+        }
+    });
 }
 
-function updateChart(){
-const m={};
-allData.forEach(r=>{
-if(selectedPlants.has(r[PLANT_COL])&&selectedMonths.has(r[MONTH_COL])){
-m[r[MONTH_COL]]=(m[r[MONTH_COL]]||0)+(+r[ACTUAL_COL]||0)/1000;
+function updateComparison(){
+    let ag=0,eg=0,ai=0,ei=0,prA=0,prE=0,cufA=0,cufE=0,c=0;
+    let expIRAct=0,expIRExp=0;
+
+    allData.forEach(r=>{
+        if(selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])){
+            ag+=+r[ACTUAL_COL]||0; eg+=+r[EXPECTED_COL]||0;
+            ai+=+r[IR_ACTUAL_COL]||0; ei+=+r[IR_EXPECTED_COL]||0;
+            prA+=+r[PR_ACTUAL_COL]||0; prE+=+r[PR_EXPECTED_COL]||0;
+            cufA+=+r[CUF_ACTUAL_COL]||0; cufE+=+r[CUF_EXPECTED_COL]||0;
+            expIRAct+=+r[ACTUAL_COL]||0;
+            expIRExp+=+r[ACTUAL_COL]*(+r[IR_EXPECTED_COL]/(+r[IR_ACTUAL_COL]||1));
+            c++;
+        }
+    });
+
+    genActual.innerText=Math.round(ag).toLocaleString();
+    genExpected.innerText=Math.round(eg).toLocaleString();
+    genDiff.innerText=((ag-eg)/eg*100).toFixed(2)+"%";
+
+    irActual.innerText=(ai/c).toFixed(2);
+    irExpected.innerText=(ei/c).toFixed(2);
+    irDiff.innerText=(((ai/c)-(ei/c))/(ei/c)*100).toFixed(2)+"%";
+
+    expIRActual.innerText=Math.round(expIRAct).toLocaleString();
+    expIRExpected.innerText=Math.round(expIRExp).toLocaleString();
+    expIRDiff.innerText=((expIRAct-expIRExp)/expIRExp*100).toFixed(2)+"%";
+
+    prActual.innerText=(prA/c).toFixed(2)+"%";
+    prExpected.innerText=(prE/c).toFixed(2)+"%";
+    cufActual.innerText=(cufA/c).toFixed(2)+"%";
+    cufExpected.innerText=(cufE/c).toFixed(2)+"%";
 }
-});
-if(chart) chart.destroy();
-chart=new Chart(barChart,{type:"bar",
-data:{labels:Object.keys(m),datasets:[{label:"Actual Gen (MWh)",data:Object.values(m),backgroundColor:"#4caf50"}]},
-options:{responsive:true}
-});
+
+function updateCharts(){
+    const gen={}, pr={}, cuf={};
+
+    allData.forEach(r=>{
+        if(selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])){
+            const p=r[PLANT_COL];
+            gen[p]=(gen[p]||0)+(+r[ACTUAL_COL]/1000);
+            pr[p]=(pr[p]||0)+(+r[PR_ACTUAL_COL]||0);
+            cuf[p]=(cuf[p]||0)+(+r[CUF_ACTUAL_COL]||0);
+        }
+    });
+
+    if(barChart)barChart.destroy();
+    if(pieGen)pieGen.destroy();
+    if(piePR)piePR.destroy();
+    if(pieCUF)pieCUF.destroy();
+
+    barChart=new Chart(barChart,{
+        type:"bar",
+        data:{labels:Object.keys(gen),datasets:[{label:"Actual Generation (MWh)",data:Object.values(gen),backgroundColor:"#4caf50"}]},
+        options:{responsive:true}
+    });
+
+    pieGen=new Chart(pieGen,{type:"pie",data:{labels:Object.keys(gen),datasets:[{data:Object.values(gen)}]}});
+
+    piePR=new Chart(piePR,{type:"pie",data:{labels:Object.keys(pr),datasets:[{data:Object.values(pr)}]}});
+
+    pieCUF=new Chart(pieCUF,{type:"pie",data:{labels:Object.keys(cuf),datasets:[{data:Object.values(cuf)}]}});
 }
 </script>
 
