@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
 
     <style>
         body {
@@ -547,7 +549,13 @@
             const tbody = document.querySelector("#monthlySummaryTable tbody");
             tbody.innerHTML = "";
 
-            Object.keys(monthData).sort().forEach(month => {
+           const monthOrder = ["Apr-25","May-25","Jun-25","Jul-25","Aug-25","Sep-25","Oct-25","Nov-25","Dec-25",
+                    "Jan-26","Feb-26","Mar-26"];
+
+                monthOrder
+                .filter(m => monthData[m])   // only months present in data
+                .forEach(month => {
+
                 const d = monthData[month];
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
@@ -600,18 +608,39 @@
             pieChart1Obj = new Chart(pieChart1, {
                 type: "pie",
                 data: {
-                    labels: Object.keys(pieGen),
-                    datasets: [{
-                        label: "Actual Generation",
-                        data: Object.values(pieGen),
-                        backgroundColor: generateColors(Object.keys(pieGen).length)
-                    }]
+                labels: Object.keys(pieGen),
+                datasets: [{
+                label: "Actual Generation",
+                data: Object.values(pieGen),
+                backgroundColor: generateColors(Object.keys(pieGen).length)
+                }]
                 },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false
-                }
-            });
+        options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        plugins: {
+            datalabels: {
+                        color: "#fff",
+                        font: {
+                            size: 8,
+                            weight: "bold"
+                        },
+                        anchor: "center",
+                        align: "center",
+                        rotation: (ctx) => {
+                            const angle = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].startAngle +
+                                          ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].circumference / 2;
+                            return angle * (180 / Math.PI); // rotate text toward center
+                        },
+                        formatter: (value, ctx) => {
+                            return ctx.chart.data.labels[ctx.dataIndex];
+                        }
+}
+
+        }
+    },
+    plugins: [ChartDataLabels]
+});
 
             pieChart2Obj = new Chart(pieChart2, {
                 type: "pie",
@@ -657,6 +686,5 @@
 </body>
 
 </html>
-
 
 
