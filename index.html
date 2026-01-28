@@ -536,7 +536,8 @@
                         count: 0
                     };
                     monthData[month].gen += +r[ACTUAL_COL] || 0;
-                    monthData[month].pr += +r[PR_ACTUAL_COL] || 0;
+                    monthData[month].pr += +r[PR_ACTUAL_COL] || 0;                    
+                    monthData[month].pr  += parseFloat(r[PR_ACTUAL_COL]) || 0;
                     monthData[month].cuf += +r[CUF_ACTUAL_COL] || 0;
                     monthData[month].avail += +r[IR_ACTUAL_COL] || 0; // Using IR as energy availability
                     monthData[month].count += 1;
@@ -656,4 +657,5 @@
 </body>
 
 </html>
+
 
