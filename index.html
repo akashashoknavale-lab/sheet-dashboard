@@ -646,8 +646,7 @@
                     maintainAspectRatio: false
                 }
             });
-
-            pieChart1Obj = new Chart(pieChart1, {
+        pieChart1Obj = new Chart(pieChart1, {
                 type: "pie",
                 data: {
                 labels: Object.keys(pieGen),
@@ -658,14 +657,9 @@
                 }]
                 },
         options: {
-        plugins: {
-                    legend: { display: false }
-                }
-
         responsive: false,
         maintainAspectRatio: false,
         plugins: {
-                        legend: { display: false },
             datalabels: {
                         color: "#fff",
                         font: {
@@ -682,7 +676,9 @@
                         formatter: (value, ctx) => {
                             return ctx.chart.data.labels[ctx.dataIndex];
                         }
-                }
+}
+
+        }
     },
     plugins: [ChartDataLabels]
 });
@@ -736,6 +732,7 @@
 </body>
 
 </html>
+
 
 
 
