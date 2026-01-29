@@ -520,8 +520,8 @@
                     cufE += parseFloat(r[CUF_EXPECTED_COL]) || 0;
                     expIRAct += +r[ACTUAL_COL] || 0;
                     expIRExp += +r[ACTUAL_COL] * (+r[IR_EXPECTED_COL] / (+r[IR_ACTUAL_COL] || 1));
-                    plantAvailSum += parseFloat(r[PLANT_AVAIL_COL] || 0;
-                    gridAvailSum += parseFloat(r[GRID_AVAIL_COL] || 0;
+                    plantAvailSum += +r[PLANT_AVAIL_COL] || 0;
+                    gridAvailSum += +r[GRID_AVAIL_COL] || 0;
 
                     c++;
                 }
