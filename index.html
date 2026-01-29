@@ -612,117 +612,154 @@
         }
 
         function updateChart() {
-            const m = {};
-            const pieGen = {};
-            const piePR = {};
-            const pieCUF = {};
-
-            allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-                    m[r[MONTH_COL]] = (m[r[MONTH_COL]] || 0) + (+r[ACTUAL_COL] / 1000); // MWh
-                    pieGen[r[MONTH_COL]] = (pieGen[r[MONTH_COL]] || 0) + (+r[ACTUAL_COL]);
-                    piePR[r[MONTH_COL]] = (piePR[r[MONTH_COL]] || 0) + (+r[PR_ACTUAL_COL]);
-                    pieCUF[r[MONTH_COL]] = (pieCUF[r[MONTH_COL]] || 0) + (+r[CUF_ACTUAL_COL]);
-                }
-            });
-
-            if (barChartObj) barChartObj.destroy();
-            if (pieChart1Obj) pieChart1Obj.destroy();
-            if (pieChart2Obj) pieChart2Obj.destroy();
-            if (pieChart3Obj) pieChart3Obj.destroy();
-
-            barChartObj = new Chart(barChart, {
-                type: "bar",
-                data: {
-                    labels: Object.keys(m),
-                    datasets: [{
-                        label: "Actual Generation (MWh)",
-                        data: Object.values(m),
-                        backgroundColor: "#4caf50"
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false
-                }
-            });
-        pieChart1Obj = new Chart(pieChart1, {
-                type: "pie",
-                data: {
-                labels: Object.keys(pieGen),
-                datasets: [{
-                label: "Actual Generation",
-                data: Object.values(pieGen),
-                backgroundColor: generateColors(Object.keys(pieGen).length)
-                }]
-                },
-        options: {
-        responsive: false,
-        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            datalabels: {
-                                color: "#fff",
-                                font: {
-                                    size: 8,
-                                    weight: "bold"
-                                },
-                                anchor: "center",
-                                align: "center",
-                                rotation: (ctx) => {
-                                    const angle =
-                                        ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].startAngle +
-                                        ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].circumference / 2;
-                                    return angle * (180 / Math.PI);
-                                },
-                                formatter: (value, ctx) => {
-                                    return ctx.chart.data.labels[ctx.dataIndex];
+                
+                    const m = {};
+                    const pieGen = {};
+                
+                    // 🔹 For average PR
+                    const piePRSum = {};
+                    const piePRCount = {};
+                
+                    // 🔹 For average CUF
+                    const pieCUFSum = {};
+                    const pieCUFCount = {};
+                
+                    allData.forEach(r => {
+                        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+                
+                            const month = r[MONTH_COL];
+                
+                            // ---- Bar chart (Generation MWh) ----
+                            m[month] = (m[month] || 0) + (+r[ACTUAL_COL] / 1000);
+                
+                            // ---- Pie 1 (Generation) ----
+                            pieGen[month] = (pieGen[month] || 0) + (+r[ACTUAL_COL]);
+                
+                            // ---- PR (Average month-wise) ----
+                            piePRSum[month] = (piePRSum[month] || 0) + (parseFloat(r[PR_ACTUAL_COL]) || 0);
+                            piePRCount[month] = (piePRCount[month] || 0) + 1;
+                
+                            // ---- CUF (Average month-wise) ----
+                            pieCUFSum[month] = (pieCUFSum[month] || 0) + (parseFloat(r[CUF_ACTUAL_COL]) || 0);
+                            pieCUFCount[month] = (pieCUFCount[month] || 0) + 1;
+                        }
+                    });
+                
+                    // ✅ Convert sums to averages
+                    const piePR = {};
+                    Object.keys(piePRSum).forEach(m => {
+                        piePR[m] = +(piePRSum[m] / piePRCount[m]).toFixed(2);
+                    });
+                
+                    const pieCUF = {};
+                    Object.keys(pieCUFSum).forEach(m => {
+                        pieCUF[m] = +(pieCUFSum[m] / pieCUFCount[m]).toFixed(2);
+                    });
+                
+                    // 🔥 Destroy old charts
+                    if (barChartObj) barChartObj.destroy();
+                    if (pieChart1Obj) pieChart1Obj.destroy();
+                    if (pieChart2Obj) pieChart2Obj.destroy();
+                    if (pieChart3Obj) pieChart3Obj.destroy();
+                
+                    // ================= BAR CHART =================
+                    barChartObj = new Chart(barChart, {
+                        type: "bar",
+                        data: {
+                            labels: Object.keys(m),
+                            datasets: [{
+                                label: "Actual Generation (MWh)",
+                                data: Object.values(m),
+                                backgroundColor: "#4caf50"
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false
+                        }
+                    });
+                
+                    // ================= PIE 1 : GENERATION =================
+                    pieChart1Obj = new Chart(pieChart1, {
+                        type: "pie",
+                        data: {
+                            labels: Object.keys(pieGen),
+                            datasets: [{
+                                label: "Actual Generation",
+                                data: Object.values(pieGen),
+                                backgroundColor: generateColors(Object.keys(pieGen).length)
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: {
+                                    color: "#fff",
+                                    font: { size: 8, weight: "bold" },
+                                    formatter: (value, ctx) =>
+                                        ctx.chart.data.labels[ctx.dataIndex]
                                 }
                             }
-                        }
-            },
-    plugins: [ChartDataLabels]
-});
-
-            pieChart2Obj = new Chart(pieChart2, {
-                type: "pie",
-                data: {
-                    labels: Object.keys(piePR),
-                    datasets: [{
-                        label: "Actual PR",
-                        data: Object.values(piePR),
-                        backgroundColor: generateColors(Object.keys(piePR).length)
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                plugins: {
-                        legend: {
-                                display: false
-                        }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                
+                    // ================= PIE 2 : AVG PR =================
+                    pieChart2Obj = new Chart(pieChart2, {
+                        type: "pie",
+                        data: {
+                            labels: Object.keys(piePR),
+                            datasets: [{
+                                label: "Average PR (%)",
+                                data: Object.values(piePR),
+                                backgroundColor: generateColors(Object.keys(piePR).length)
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: {
+                                    color: "#fff",
+                                    font: { size: 8, weight: "bold" },
+                                    formatter: (value, ctx) =>
+                                        ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                
+                    // ================= PIE 3 : AVG CUF =================
+                    pieChart3Obj = new Chart(pieChart3, {
+                        type: "pie",
+                        data: {
+                            labels: Object.keys(pieCUF),
+                            datasets: [{
+                                label: "Average CUF (%)",
+                                data: Object.values(pieCUF),
+                                backgroundColor: generateColors(Object.keys(pieCUF).length)
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: {
+                                    color: "#fff",
+                                    font: { size: 8, weight: "bold" },
+                                    formatter: (value, ctx) =>
+                                        ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
                 }
-                }
-            });
-
-            pieChart3Obj = new Chart(pieChart3, {
-                type: "pie",
-                data: {
-                    labels: Object.keys(pieCUF),
-                    datasets: [{
-                        label: "Actual CUF",
-                        data: Object.values(pieCUF),
-                        backgroundColor: generateColors(Object.keys(pieCUF).length)
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false
-                }
-            });
-        }
 
         function generateColors(n) {
             const colors = [];
@@ -735,6 +772,7 @@
 </body>
 
 </html>
+
 
 
 
