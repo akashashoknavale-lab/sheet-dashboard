@@ -659,27 +659,30 @@
         options: {
         responsive: false,
         maintainAspectRatio: false,
-        plugins: {
-            datalabels: {
-                        color: "#fff",
-                        font: {
-                            size: 8,
-                            weight: "bold"
-                        },
-                        anchor: "center",
-                        align: "center",
-                        rotation: (ctx) => {
-                            const angle = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].startAngle +
-                                          ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].circumference / 2;
-                            return angle * (180 / Math.PI); // rotate text toward center
-                        },
-                        formatter: (value, ctx) => {
-                            return ctx.chart.data.labels[ctx.dataIndex];
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            datalabels: {
+                                color: "#fff",
+                                font: {
+                                    size: 8,
+                                    weight: "bold"
+                                },
+                                anchor: "center",
+                                align: "center",
+                                rotation: (ctx) => {
+                                    const angle =
+                                        ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].startAngle +
+                                        ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].circumference / 2;
+                                    return angle * (180 / Math.PI);
+                                },
+                                formatter: (value, ctx) => {
+                                    return ctx.chart.data.labels[ctx.dataIndex];
+                                }
+                            }
                         }
-}
-
-        }
-    },
+            },
     plugins: [ChartDataLabels]
 });
 
@@ -732,6 +735,7 @@
 </body>
 
 </html>
+
 
 
 
