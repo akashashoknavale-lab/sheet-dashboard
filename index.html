@@ -422,20 +422,35 @@
                 updateView();
             });
 
-            function createFilters() {
-                let allowedPlants = new Set();
-            
-                if (loginUser.role === "admin" || loginUser.plants === "ALL") {
-                    allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
-                } else {
-                    loginUser.plants.split(",").forEach(p => allowedPlants.add(p.trim()));
-                }
-            
-                [...allowedPlants].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-            
-                [...new Set(allData.map(r => r[MONTH_COL]))]
-                    .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+         function createFilters() {
+            let allowedPlants = new Set();
+        
+            // 🔑 Clear old selections
+            selectedPlants.clear();
+            selectedMonths.clear();
+        
+            // ADMIN → all plants
+            if (loginUser.role === "admin" || loginUser.plants === "ALL") {
+                allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
             }
+            // CUSTOMER → only assigned plants
+            else {
+                loginUser.plants
+                    .split(",")
+                    .map(p => p.trim())
+                    .forEach(p => allowedPlants.add(p));
+            }
+        
+            // ✅ Create plant checkboxes ONLY for allowed plants
+            allowedPlants.forEach(p => {
+                addCheckbox("plantFilter", p, selectedPlants);
+            });
+        
+            // ✅ Months (same for all users)
+            [...new Set(allData.map(r => r[MONTH_COL]))]
+                .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+        }
+
 
 
         function addCheckbox(id, val, set) {
@@ -713,6 +728,7 @@
 </body>
 
 </html>
+
 
 
 
