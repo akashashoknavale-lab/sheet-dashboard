@@ -661,11 +661,6 @@
         responsive: false,
         maintainAspectRatio: false,
         plugins: {
-                  legend: {
-                          display: false
-                 }
-        }
-        plugins: {
             datalabels: {
                         color: "#fff",
                         font: {
@@ -677,12 +672,12 @@
                         rotation: (ctx) => {
                             const angle = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].startAngle +
                                           ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].circumference / 2;
-                            return angle * (180 / Math.PI); // rotate text toward center
+                            return angle * |(180 / Math.PI)|; // rotate text toward center
                         },
                         formatter: (value, ctx) => {
                             return ctx.chart.data.labels[ctx.dataIndex];
                         }
-}
+                }
 
         }
     },
@@ -738,6 +733,7 @@
 </body>
 
 </html>
+
 
 
 
