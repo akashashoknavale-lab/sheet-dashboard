@@ -62,3 +62,25 @@ function login() {
         .then(csv => {
             const rows = csv.split("\n").map(r => r.split(",").map(c => c.replace(/"/g,"").trim()));
             rows.shift(); // remove header
+
+            const user = rows.find(r => r[0] === u && r[1] === p);
+
+            if (!user) {
+                error.innerText = "Invalid username or password";
+                return;
+            }
+
+            const loginData = {
+                username: user[0],
+                role: user[2],
+                plants: user[3]
+            };
+
+            localStorage.setItem("loginUser", JSON.stringify(loginData));
+            window.location.href = "index.html"; // your existing page
+        });
+}
+</script>
+
+</body>
+</html>
