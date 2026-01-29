@@ -9,6 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
+        <button onclick="logout()" style="font-size:11px;">Logout</button>
+        
+        <script>
+        function logout() {
+            localStorage.removeItem("loginUser");
+            window.location.href = "login.html";
+        }
+        </script>
 
     <style>
         body {
@@ -373,6 +381,13 @@
     </div>
 
     <script>
+        const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+
+        if (!loginUser) {
+            window.location.href = "login.html";
+        }
+
+        
         const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
         const GID = "0";
 
@@ -407,10 +422,21 @@
                 updateView();
             });
 
-        function createFilters() {
-            [...new Set(allData.map(r => r[PLANT_COL]))].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-            [...new Set(allData.map(r => r[MONTH_COL]))].forEach(m => addCheckbox("monthFilter", m, selectedMonths));
-        }
+            function createFilters() {
+                let allowedPlants = new Set();
+            
+                if (loginUser.role === "admin" || loginUser.plants === "ALL") {
+                    allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
+                } else {
+                    loginUser.plants.split(",").forEach(p => allowedPlants.add(p.trim()));
+                }
+            
+                [...allowedPlants].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
+            
+                [...new Set(allData.map(r => r[MONTH_COL]))]
+                    .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+            }
+
 
         function addCheckbox(id, val, set) {
             const l = document.createElement("label");
@@ -687,6 +713,7 @@
 </body>
 
 </html>
+
 
 
 
