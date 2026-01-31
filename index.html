@@ -19,6 +19,16 @@
     </script>
     <!-- ================= STYLES ================= -->
     <style>
+            .company-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 4px 0 6px 0;
+            background: white;
+            padding: 6px;
+            border-radius: 6px;
+        }
     body {
             font-family: Arial, sans-serif;
             background: #f2f2f2;
@@ -171,7 +181,7 @@
         .monthly-summary-table th,
         .monthly-summary-table td {
          min-width: 120px;
-            /* increase/decrease as needed */
+        /* increase/decrease as needed */
          white-space: nowrap;
         }
 
@@ -179,43 +189,44 @@
         .monthly-summary-table th:nth-child(1),
         .monthly-summary-table td:nth-child(1) {
          min-width: 80px;
-            /* Month */
+         /* Month */
         }
 
         .monthly-summary-table th:nth-child(2),
         .monthly-summary-table td:nth-child(2) {
          min-width: 150px;
-            /* Total Generation */
+        /* Total Generation */
         }
 
         .monthly-summary-table th:nth-child(3),
         .monthly-summary-table td:nth-child(3) {
          min-width: 120px;
-            /* Avg PR */
+         /* Avg PR */
         }
 
         .monthly-summary-table th:nth-child(4),
         .monthly-summary-table td:nth-child(4) {
          min-width: 180px;
-            /* Energy Availability */
+         /* Energy Availability */
         }
 
         .monthly-summary-table th:nth-child(5),
         .monthly-summary-table td:nth-child(5) {
-            min-width: 120px;
+        min-width: 120px;
             /* Avg CUF */
         }
-    /* Limit big data table to first 18 columns only */
+        /* Limit big data table to first 18 columns only */
         .data-table th:nth-child(n+19),
         .data-table td:nth-child(n+19) {
         display: none;
         }
-
     </style>
-</head>
+    </head>
 
 <body>
-
+    <h1 class="company-title">
+        BHAGERIA GREEN ENERGY SOLUTIONS PRIVATE LIMITED
+    </h1>
     <h2>☀️ Captive Plant Solar Park 1 & 2</h2>
 
     <div class="filters">
@@ -389,7 +400,7 @@
         
         const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
         const GID = "0";
-
+        
         const PLANT_COL = 0;
         const MONTH_COL = 1;
         const ACTUAL_COL = 3;
@@ -771,5 +782,6 @@
 </body>
 
 </html>
+
 
 
