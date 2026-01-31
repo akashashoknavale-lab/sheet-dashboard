@@ -458,18 +458,21 @@
         });
 
 
-        function addCheckbox(id, val, set) {
+        function addCheckbox(id, value, labelText, set) {
             const l = document.createElement("label");
             const c = document.createElement("input");
+        
             c.type = "checkbox";
             c.checked = true;
-            set.add(val);
+            set.add(value);
+        
             c.onchange = () => {
-                c.checked ? set.add(val) : set.delete(val);
+                c.checked ? set.add(value) : set.delete(value);
                 updateView();
             };
+        
             l.appendChild(c);
-            l.append(" " + val);
+            l.append(" " + labelText);
             document.getElementById(id).appendChild(l);
         }
 
@@ -500,7 +503,7 @@
             const tb = document.querySelector("#dataTable tbody");
             tb.innerHTML = "";
             allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+                if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
                     const tr = document.createElement("tr");
                     r.forEach(c => {
                         const td = document.createElement("td");
@@ -529,7 +532,7 @@
 
 
             allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+                if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
                     ag += +r[ACTUAL_COL] || 0;
                     eg += +r[EXPECTED_COL] || 0;
                     ai += +r[IR_ACTUAL_COL] || 0;
@@ -574,7 +577,7 @@
             const monthData = {};
 
             allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+                if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
                     const month = r[MONTH_COL];
                     if (!monthData[month]) monthData[month] = {
                         gen: 0,
@@ -630,7 +633,7 @@
                     const pieCUFCount = {};
                 
                     allData.forEach(r => {
-                        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+                        if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
                 
                             const month = r[MONTH_COL];
                 
