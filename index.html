@@ -381,14 +381,6 @@
     </div>
 
     <script>
-        function normalizePlant(v) {
-            return v
-        .toString()
-        .replace(/\s+/g, " ")   // remove extra spaces
-        .trim()
-        .toLowerCase();
-        }
-            
         const loginUser = JSON.parse(localStorage.getItem("loginUser"));
 
         if (!loginUser) {
@@ -430,49 +422,49 @@
                 updateView();
             });
 
-        function createFilters() {
-        let allowedPlants = new Map(); // key = normalized, value = display name
+         function createFilters() {
+            let allowedPlants = new Set();
         
-        // ADMIN → all plants
-        if (loginUser.role === "admin" || loginUser.plants === "ALL") {
-            allData.forEach(r => {
-                allowedPlants.set(
-                    normalizePlant(r[PLANT_COL]),
-                    r[PLANT_COL]
-                );
+            // 🔑 Clear old selections
+            selectedPlants.clear();
+            selectedMonths.clear();
+        
+            // ADMIN → all plants
+            if (loginUser.role === "admin" || loginUser.plants === "ALL") {
+                allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
+            }
+            // CUSTOMER → only assigned plants
+            else {
+                loginUser.plants
+                    .split(",")
+                    .map(p => p.trim())
+                    .forEach(p => allowedPlants.add(p));
+            }
+        
+            // ✅ Create plant checkboxes ONLY for allowed plants
+            allowedPlants.forEach(p => {
+                addCheckbox("plantFilter", p, selectedPlants);
             });
-        }
-        // CUSTOMER → multiple plants
-        else {
-            loginUser.plants
-                .split(",")
-                .map(p => p.trim())
-                .forEach(p => {
-                    allowedPlants.set(normalizePlant(p), p);
-                });
-        }
         
-        // Create checkboxes
-        allowedPlants.forEach((display, key) => {
-            addCheckbox("plantFilter", key, display, selectedPlants);
-        });
+            // ✅ Months (same for all users)
+            [...new Set(allData.map(r => r[MONTH_COL]))]
+                .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+        }
 
 
-        function addCheckbox(id, value, labelText, set) {
+
+        function addCheckbox(id, val, set) {
             const l = document.createElement("label");
             const c = document.createElement("input");
-        
             c.type = "checkbox";
             c.checked = true;
-            set.add(value);
-        
+            set.add(val);
             c.onchange = () => {
-                c.checked ? set.add(value) : set.delete(value);
+                c.checked ? set.add(val) : set.delete(val);
                 updateView();
             };
-        
             l.appendChild(c);
-            l.append(" " + labelText);
+            l.append(" " + val);
             document.getElementById(id).appendChild(l);
         }
 
@@ -503,7 +495,7 @@
             const tb = document.querySelector("#dataTable tbody");
             tb.innerHTML = "";
             allData.forEach(r => {
-                if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
+                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
                     const tr = document.createElement("tr");
                     r.forEach(c => {
                         const td = document.createElement("td");
@@ -532,7 +524,7 @@
 
 
             allData.forEach(r => {
-                if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
+                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
                     ag += +r[ACTUAL_COL] || 0;
                     eg += +r[EXPECTED_COL] || 0;
                     ai += +r[IR_ACTUAL_COL] || 0;
@@ -577,7 +569,7 @@
             const monthData = {};
 
             allData.forEach(r => {
-                if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
+                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
                     const month = r[MONTH_COL];
                     if (!monthData[month]) monthData[month] = {
                         gen: 0,
@@ -633,7 +625,7 @@
                     const pieCUFCount = {};
                 
                     allData.forEach(r => {
-                        if (selectedPlants.has(normalizePlant(r[PLANT_COL])) && selectedMonths.has(r[MONTH_COL])) {
+                        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
                 
                             const month = r[MONTH_COL];
                 
@@ -780,7 +772,6 @@
 </body>
 
 </html>
-
 
 
 
