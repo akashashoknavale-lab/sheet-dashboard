@@ -422,18 +422,29 @@
                 updateView();
             });
 
-         function createFilters() {
+        function createFilters() {
             let allowedPlants = new Set();
         
             // 🔑 Clear old selections
             selectedPlants.clear();
             selectedMonths.clear();
         
-            // ADMIN → all plants
+            // 🔥 CLEAR OLD CHECKBOXES (but keep buttons)
+            document.getElementById("plantFilter").innerHTML = `
+                <button class="action-btn" onclick="selectAll('plant')">Select All</button>
+                <button class="action-btn" onclick="deselectAll('plant')">Deselect All</button>
+            `;
+        
+            document.getElementById("monthFilter").innerHTML = `
+                <button class="action-btn" onclick="selectAll('month')">Select All</button>
+                <button class="action-btn" onclick="deselectAll('month')">Deselect All</button>
+            `;
+        
+            // ✅ ADMIN → all plants
             if (loginUser.role === "admin" || loginUser.plants === "ALL") {
                 allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
             }
-            // CUSTOMER → only assigned plants
+            // ✅ CUSTOMER → multiple assigned plants
             else {
                 loginUser.plants
                     .split(",")
@@ -441,15 +452,16 @@
                     .forEach(p => allowedPlants.add(p));
             }
         
-            // ✅ Create plant checkboxes ONLY for allowed plants
+            // ✅ Add plant checkboxes (MULTIPLE will show now)
             allowedPlants.forEach(p => {
                 addCheckbox("plantFilter", p, selectedPlants);
             });
         
-            // ✅ Months (same for all users)
+            // ✅ Months
             [...new Set(allData.map(r => r[MONTH_COL]))]
                 .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
         }
+
 
 
 
@@ -772,6 +784,7 @@
 </body>
 
 </html>
+
 
 
 
