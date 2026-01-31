@@ -381,6 +381,14 @@
     </div>
 
     <script>
+        function normalizePlant(v) {
+            return v
+        .toString()
+        .replace(/\s+/g, " ")   // remove extra spaces
+        .trim()
+        .toLowerCase();
+        }
+            
         const loginUser = JSON.parse(localStorage.getItem("loginUser"));
 
         if (!loginUser) {
@@ -423,46 +431,31 @@
             });
 
         function createFilters() {
-            let allowedPlants = new Set();
+        let allowedPlants = new Map(); // key = normalized, value = display name
         
-            // 🔑 Clear old selections
-            selectedPlants.clear();
-            selectedMonths.clear();
-        
-            // 🔥 CLEAR OLD CHECKBOXES (but keep buttons)
-            document.getElementById("plantFilter").innerHTML = `
-                <button class="action-btn" onclick="selectAll('plant')">Select All</button>
-                <button class="action-btn" onclick="deselectAll('plant')">Deselect All</button>
-            `;
-        
-            document.getElementById("monthFilter").innerHTML = `
-                <button class="action-btn" onclick="selectAll('month')">Select All</button>
-                <button class="action-btn" onclick="deselectAll('month')">Deselect All</button>
-            `;
-        
-            // ✅ ADMIN → all plants
-            if (loginUser.role === "admin" || loginUser.plants === "ALL") {
-                allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
-            }
-            // ✅ CUSTOMER → multiple assigned plants
-            else {
-                loginUser.plants
-                    .split(",")
-                    .map(p => p.trim())
-                    .forEach(p => allowedPlants.add(p));
-            }
-        
-            // ✅ Add plant checkboxes (MULTIPLE will show now)
-            allowedPlants.forEach(p => {
-                addCheckbox("plantFilter", p, selectedPlants);
+        // ADMIN → all plants
+        if (loginUser.role === "admin" || loginUser.plants === "ALL") {
+            allData.forEach(r => {
+                allowedPlants.set(
+                    normalizePlant(r[PLANT_COL]),
+                    r[PLANT_COL]
+                );
             });
-        
-            // ✅ Months
-            [...new Set(allData.map(r => r[MONTH_COL]))]
-                .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
         }
-
-
+        // CUSTOMER → multiple plants
+        else {
+            loginUser.plants
+                .split(",")
+                .map(p => p.trim())
+                .forEach(p => {
+                    allowedPlants.set(normalizePlant(p), p);
+                });
+        }
+        
+        // Create checkboxes
+        allowedPlants.forEach((display, key) => {
+            addCheckbox("plantFilter", key, display, selectedPlants);
+        });
 
 
         function addCheckbox(id, val, set) {
@@ -784,6 +777,7 @@
 </body>
 
 </html>
+
 
 
 
