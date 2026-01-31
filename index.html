@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <!-- ================= BASIC META & TITLE ================= -->
+    <!-- ================= BASIC META & TITLE ================= -->
     <meta charset="UTF-8">
     <title>Solar Plant Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -78,125 +78,125 @@
         }
 
         .top-container {
-            display: flex;
-                font-size: 14px;      /* 🔽 reduce more if needed: 9px / 8px */
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 20px;
+         display: flex;
+         font-size: 14px;      /* 🔽 reduce more if needed: 9px / 8px */
+         justify-content: space-between;
+         gap: 15px;
+         margin-bottom: 20px;
         }
 
         .comparison-container {
-            display: flex;
-            flex-wrap: wrap;
-            column-gap: 5px;
-            /* horizontal space between tables */
-            row-gap: 20px;
-            /* vertical space between rows of tables (reduced) */
-            width: 35%;
+         display: flex;
+         flex-wrap: wrap;
+         column-gap: 5px;
+         /* horizontal space between tables */
+         row-gap: 20px;
+         /* vertical space between rows of tables (reduced) */
+         width: 35%;
         }
 
         .chart-container {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+         display: flex;
+         flex-direction: column;
+         gap: 5px;
         }
 
         .chart-row {
-            display: flex;
-            gap: 10px;
+         display: flex;
+         gap: 10px;
         }
 
         canvas {
-            background: white;
-            padding: 5px;
-            border-radius: 10px;
+        background: white;
+        padding: 5px;
+        border-radius: 10px;
         }
 
         .comparison-table {
-            width: 120px;
-            border-collapse: collapse;
-            background: white;
+        width: 120px;
+        border-collapse: collapse;
+        background: white;
         }
 
         .comparison-table th,
         .comparison-table td {
-            border: 1px solid #ccc;
-            padding: 4px;
-            text-align: center;
-            font-size: 10px;
+        border: 1px solid #ccc;
+        padding: 4px;
+        text-align: center;
+        font-size: 10px;
         }
 
         .comparison-table th {
-            background: #34495e;
-            color: white;
+        background: #34495e;
+        color: white;
         }
 
         .diff-positive {
-            background: #c8e6c9;
-            color: #256029;
+        background: #c8e6c9;
+        color: #256029;
         }
 
         .diff-negative {
-            background: #ffcccc;
-            color: #a50000;
+        background: #ffcccc;
+        color: #a50000;
         }
 
         .table-wrapper {
-            max-height: 400px;
-            overflow-y: auto;
-            background: white;
+        max-height: 400px;
+        overflow-y: auto;
+        background: white;
         }
 
         .data-table {
-            width: 100%;
-            border-collapse: collapse;
+        width: 100%;
+        border-collapse: collapse;
         }
 
         .data-table th,
         .data-table td {
-            border: 1px solid #ccc;
-            padding: 6px;
-            font-size: 10px;
-            text-align: center;
+        border: 1px solid #ccc;
+        padding: 6px;
+        font-size: 10px;
+        text-align: center;
         }
 
         .data-table th {
-            background: #34495e;
-            color: white;
-            position: sticky;
-            top: 0;
+         background: #34495e;
+         color: white;
+         position: sticky;
+         top: 0;
         }
 
         /* Monthly summary column width control */
         .monthly-summary-table th,
         .monthly-summary-table td {
-            min-width: 120px;
+         min-width: 120px;
             /* increase/decrease as needed */
-            white-space: nowrap;
+         white-space: nowrap;
         }
 
         /* Individual column control */
         .monthly-summary-table th:nth-child(1),
         .monthly-summary-table td:nth-child(1) {
-            min-width: 80px;
+         min-width: 80px;
             /* Month */
         }
 
         .monthly-summary-table th:nth-child(2),
         .monthly-summary-table td:nth-child(2) {
-            min-width: 150px;
+         min-width: 150px;
             /* Total Generation */
         }
 
         .monthly-summary-table th:nth-child(3),
         .monthly-summary-table td:nth-child(3) {
-            min-width: 120px;
+         min-width: 120px;
             /* Avg PR */
         }
 
         .monthly-summary-table th:nth-child(4),
         .monthly-summary-table td:nth-child(4) {
-            min-width: 180px;
+         min-width: 180px;
             /* Energy Availability */
         }
 
@@ -771,4 +771,5 @@
 </body>
 
 </html>
+
 
