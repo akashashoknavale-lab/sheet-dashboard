@@ -723,14 +723,19 @@
                                     font: { size: 12, weight: "bold" }
                                 },
                                 legend: { display: false },
-                                datalabels: {
-                                    color: "#fff",
-                                    font: { size: 8, weight: "bold" },
-                                    anchor: "center",
-                                    align: "center",
-                                    formatter: (value, ctx) =>
-                                        ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                }
+                                    datalabels: {
+                                        color: "#fff",
+                                        font: {
+                                            size: 8,
+                                            weight: "bold"
+                                        },
+                                        anchor: "center",
+                                        align: "center",
+                                        offset: -10,          // 🔥 pulls text towards center
+                                        textAlign: "center",
+                                        formatter: (value, ctx) =>
+                                            ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
+                                    }        
                             }
                         },
                         plugins: [ChartDataLabels]
@@ -758,15 +763,19 @@
                                     padding: { top: 5, bottom: 5 }
                                 },
                                 legend: { display: false },
-                                datalabels: {
-                                    color: "#fff",
-                                    font: { size: 8, weight: "bold" },
-                                    anchor: "center",
-                                    align: "center",
-                                    offset: 0,
-                                    formatter: (value, ctx) =>
-                                        ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                }
+                                    datalabels: {
+                                        color: "#fff",
+                                        font: {
+                                            size: 8,
+                                            weight: "bold"
+                                        },
+                                        anchor: "center",
+                                        align: "center",
+                                        offset: -10,          // 🔥 pulls text towards center
+                                        textAlign: "center",
+                                        formatter: (value, ctx) =>
+                                            ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
+                                    }
                             }
                         },
                         plugins: [ChartDataLabels]
@@ -794,15 +803,19 @@
                                     padding: { top: 5, bottom: 5 }
                                 },
                                 legend: { display: false },
-                                datalabels: {
-                                    color: "#fff",
-                                    font: { size: 8, weight: "bold" },
-                                    anchor: "center",
-                                    align: "center",
-                                    offset: 0,
-                                    formatter: (value, ctx) =>
-                                        ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                }
+                                    datalabels: {
+                                        color: "#fff",
+                                        font: {
+                                            size: 8,
+                                            weight: "bold"
+                                        },
+                                        anchor: "center",
+                                        align: "center",
+                                        offset: -10,          // 🔥 pulls text towards center
+                                        textAlign: "center",
+                                        formatter: (value, ctx) =>
+                                            ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
+                                    }
                             }
                         },
                         plugins: [ChartDataLabels]
@@ -820,6 +833,7 @@
 </body>
 
 </html>
+
 
 
 
