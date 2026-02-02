@@ -690,14 +690,21 @@
                     });
                 
                     // ================= PIE 1 : GENERATION =================
+                                // 🔢 Convert generation to % of total
+                            const totalGen = Object.values(pieGen).reduce((a, b) => a + b, 0);
+                            
+                            const pieGenPercent = {};
+                            Object.keys(pieGen).forEach(m => {
+                                pieGenPercent[m] = +((pieGen[m] / totalGen) * 100).toFixed(2);
+                            });
                     pieChart1Obj = new Chart(pieChart1, {
                         type: "pie",
                         data: {
-                            labels: Object.keys(pieGen),
+                            labels: Object.keys(pieGenPercent),
                             datasets: [{
-                                label: "Actual Generation",
-                                data: Object.values(pieGen),
-                                backgroundColor: generateColors(Object.keys(pieGen).length)
+                                label: "Generation Contribution (%)",
+                                data: Object.values(pieGenPercent),
+                                backgroundColor: generateColors(Object.keys(pieGenPercent).length)
                             }]
                         },
                         options: {
@@ -706,9 +713,8 @@
                             plugins: {
                                 title: {
                                     display: true,
-                                    text: "Month-wise Actual Generation",
-                                    font: { size: 12, weight: "bold" },
-                                    padding: { top: 5, bottom: 5 }
+                                    text: "Month-wise Generation Contribution (%)",
+                                    font: { size: 12, weight: "bold" }
                                 },
                                 legend: { display: false },
                                 datalabels: {
@@ -716,9 +722,8 @@
                                     font: { size: 8, weight: "bold" },
                                     anchor: "center",
                                     align: "center",
-                                    offset: 0,
                                     formatter: (value, ctx) =>
-                                        ctx.chart.data.labels[ctx.dataIndex]
+                                        ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
                                 }
                             }
                         },
@@ -809,6 +814,7 @@
 </body>
 
 </html>
+
 
 
 
