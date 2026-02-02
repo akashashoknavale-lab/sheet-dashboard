@@ -575,51 +575,57 @@
 
         }
 
-        function updateMonthlySummary() {
-            const monthData = {};
-
-            allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-                    const month = r[MONTH_COL];
-                    if (!monthData[month]) monthData[month] = {
-                        gen: 0,
-                        pr: 0,
-                        avail: 0,
-                        cuf: 0,
-                        count: 0
-                    };
-                    monthData[month].gen += +r[ACTUAL_COL] || 0;
-                    monthData[month].pr += +r[PR_ACTUAL_COL] || 0;                    
-                    monthData[month].pr  += parseFloat(r[PR_ACTUAL_COL]) || 0;
-                    monthData[month].cufA += +r[CUF_ACTUAL_COL] || 0;                    
-                    monthData[month].cufA += parseFloat(r[CUF_ACTUAL_COL]) || 0;
-                    monthData[month].avail += +r[IR_ACTUAL_COL] || 0; // Using IR as energy availability
-                    monthData[month].count += 1;
-                }
-            });
-
-            const tbody = document.querySelector("#monthlySummaryTable tbody");
-            tbody.innerHTML = "";
-
-           const monthOrder = ["Apr-25","May-25","Jun-25","Jul-25","Aug-25","Sep-25","Oct-25","Nov-25","Dec-25",
-                    "Jan-26","Feb-26","Mar-26"];
-
+            function updateMonthlySummary() {
+                const monthData = {};
+            
+                allData.forEach(r => {
+                    if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
+            
+                        const month = r[MONTH_COL];
+            
+                        if (!monthData[month]) {
+                            monthData[month] = {
+                                gen: 0,
+                                pr: 0,
+                                cuf: 0,
+                                avail: 0,
+                                count: 0
+                            };
+                        }
+            
+                        monthData[month].gen += +r[ACTUAL_COL] || 0;
+                        monthData[month].pr  += parseFloat(r[PR_ACTUAL_COL]) || 0;
+                        monthData[month].cuf += parseFloat(r[CUF_ACTUAL_COL]) || 0;
+                        monthData[month].avail += +r[IR_ACTUAL_COL] || 0;
+                        monthData[month].count++;
+                    }
+                });
+            
+                const tbody = document.querySelector("#monthlySummaryTable tbody");
+                tbody.innerHTML = "";
+            
+                const monthOrder = [
+                    "Apr-25","May-25","Jun-25","Jul-25","Aug-25","Sep-25",
+                    "Oct-25","Nov-25","Dec-25","Jan-26","Feb-26","Mar-26"
+                ];
+            
                 monthOrder
-                .filter(m => monthData[m])   // only months present in data
-                .forEach(month => {
-
-                const d = monthData[month];
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-            <td>${month}</td>
-            <td>${Math.round(d.gen).toLocaleString()}</td>
-            <td>${(d.pr/d.count).toFixed(2)}%</td>
-            <td>${(d.avail/d.count).toFixed(2)}%</td>
-            <td>${(d.cuf/d.count).toFixed(2)}%</td>
-        `;
-                tbody.appendChild(tr);
-            });
-        }
+                    .filter(m => monthData[m])
+                    .forEach(month => {
+            
+                        const d = monthData[month];
+            
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${month}</td>
+                            <td>${Math.round(d.gen).toLocaleString()}</td>
+                            <td>${(d.pr / d.count).toFixed(2)}%</td>
+                            <td>${(d.avail / d.count).toFixed(2)}%</td>
+                            <td>${(d.cuf / d.count).toFixed(2)}%</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+            }
 
         function updateChart() {
                 
@@ -814,6 +820,7 @@
 </body>
 
 </html>
+
 
 
 
