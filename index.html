@@ -639,6 +639,7 @@
                 
                     const m = {};
                     const pieGen = {};
+                    const expectedGen = {};
                 
                     // 🔹 For average PR
                     const piePRSum = {};
@@ -653,8 +654,9 @@
                 
                             const month = r[MONTH_COL];
                 
-                            // ---- Bar chart (Generation MWh) ----
+                            // ---- Bar chart (actual and exprected Generation MWh) ----
                             m[month] = (m[month] || 0) + (+r[ACTUAL_COL] / 1000);
+                            expectedGen[month] = (expectedGen[month] || 0) + (+r[EXPECTED_COL] / 1000);
                 
                             // ---- Pie 1 (Generation) ----
                             pieGen[month] = (pieGen[month] || 0) + (+r[ACTUAL_COL]);
@@ -687,21 +689,53 @@
                     if (pieChart3Obj) pieChart3Obj.destroy();
                 
                     // ================= BAR CHART =================
-                    barChartObj = new Chart(barChart, {
-                        type: "bar",
-                        data: {
-                            labels: Object.keys(m),
-                            datasets: [{
-                                label: "Actual Generation (MWh)",
-                                data: Object.values(m),
-                                backgroundColor: "#4caf50"
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            maintainAspectRatio: false
-                        }
-                    });
+                        barChartObj = new Chart(barChart, {
+                            data: {
+                                labels: Object.keys(m),
+                                datasets: [
+                                    {
+                                        type: "bar",
+                                        label: "Actual Generation (MWh)",
+                                        data: Object.values(m),
+                                        backgroundColor: "#4caf50",
+                                        order: 2
+                                    },
+                                    {
+                                        type: "line",
+                                        label: "Expected Generation (MWh)",
+                                        data: Object.keys(m).map(k => expectedGen[k] || 0),
+                                        borderColor: "#e74c3c",
+                                        backgroundColor: "#e74c3c",
+                                        borderWidth: 2,
+                                        pointRadius: 5,        // 🔴 balls
+                                        pointHoverRadius: 7,
+                                        pointBackgroundColor: "#fff",
+                                        pointBorderColor: "#e74c3c",
+                                        tension: 0.3,          // smooth curve
+                                        fill: false,
+                                        order: 1
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: false,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: true
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: "Energy (MWh)"
+                                        }
+                                    }
+                                }
+                            }
+                        });
                 
                     // ================= PIE 1 : GENERATION =================
                                 // 🔢 Convert generation to % of total
@@ -871,6 +905,7 @@
 </body>
 
 </html>
+
 
 
 
