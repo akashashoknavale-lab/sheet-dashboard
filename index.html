@@ -865,29 +865,28 @@
                                     padding: { top: 5, bottom: 5 }
                                 },
                                 legend: { display: false },
-                                        datalabels: {
-                                            color: "#fff",
-                                            font: {
-                                                size: 10,
-                                                weight: "bold"
-                                            },
-                                            anchor: "end",
-                                            align: "end",
-                                            offset: -60,
-                                            textAlign: "center",
-                                            rotation: (ctx) => {
-                                                const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
-                                                let angle = (meta.startAngle + meta.endAngle) / 2;
-                                                let deg = angle * (180 / Math.PI);
-                                        
-                                                if (deg > 90 && deg < 270) {
-                                                    deg += 180;
-                                                }
-                                                return deg;
-                                            },
-                                            formatter: (value, ctx) =>
-                                                ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                        }
+                                    datalabels: {
+                                        display: true,
+                                        listeners: false,  // 🔹 important: calculate position immediately
+                                        color: "#fff",
+                                        font: {
+                                            size: 8,
+                                            weight: "bold"
+                                        },
+                                        anchor: "end",
+                                        align: "end",
+                                        offset: 12,
+                                        textAlign: "center",
+                                        rotation: (ctx) => {
+                                            const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
+                                            let angle = (meta.startAngle + meta.endAngle) / 2;
+                                            let deg = angle * (180 / Math.PI);
+                                            if (deg > 90 && deg < 270) deg += 180;
+                                            return deg;
+                                        },
+                                        formatter: (value, ctx) =>
+                                            ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
+                                    }
                             }
                         },
                         plugins: [ChartDataLabels]
@@ -905,6 +904,7 @@
 </body>
 
 </html>
+
 
 
 
