@@ -787,9 +787,9 @@
                                             size: 10,
                                             weight: "bold"
                                         },
-                                        anchor: "center",
-                                        align: "center",
-                                        offset: -10,
+                                        anchor: "end",
+                                        align: "end",
+                                        offset: -50,
                                         textAlign: "center",
                                         rotation: (ctx) => {
                                             const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
@@ -832,14 +832,14 @@
                                 },
                                 legend: { display: false },
                                         datalabels: {
-                                            color: "#000",
+                                            color: "#fff",
                                             font: {
                                                 size: 10,
                                                 weight: "bold"
                                             },
                                             anchor: "end",
                                             align: "end",
-                                            offset: -10,
+                                            offset: -50,
                                             textAlign: "center",
                                             rotation: (ctx) => {
                                                 const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
@@ -871,6 +871,7 @@
 </body>
 
 </html>
+
 
 
 
