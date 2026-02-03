@@ -732,23 +732,28 @@
                                 },
                                 legend: { display: false },
                                     datalabels: {
-                                        color: "#000",
+                                        color: "#fff",
                                         font: {
                                             size: 12,
                                             weight: "bold"
                                         },
                                         anchor: "center",
                                         align: "center",
-                                        offset: -20,
+                                        offset: -10,
                                         textAlign: "center",
                                         rotation: (ctx) => {
                                             const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
-                                            const angle = (meta.startAngle + meta.endAngle) / 2;
-                                            return angle * (180 / Math.PI);
+                                            let angle = (meta.startAngle + meta.endAngle) / 2;
+                                            let deg = angle * (180 / Math.PI);
+                                    
+                                            if (deg > 90 && deg < 270) {
+                                                deg += 180;
+                                            }
+                                            return deg;
                                         },
                                         formatter: (value, ctx) =>
                                             ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                    }      
+                                    }     
                             }
                         },
                         plugins: [ChartDataLabels]
@@ -856,6 +861,7 @@
 </body>
 
 </html>
+
 
 
 
