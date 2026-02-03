@@ -739,11 +739,16 @@
                                         },
                                         anchor: "center",
                                         align: "center",
-                                        offset: -10,          // 🔥 pulls text towards center
+                                        offset: -10,
                                         textAlign: "center",
+                                        rotation: (ctx) => {
+                                            const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
+                                            const angle = (meta.startAngle + meta.endAngle) / 2;
+                                            return angle * (180 / Math.PI);
+                                        },
                                         formatter: (value, ctx) =>
                                             ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                    }        
+                                    }      
                             }
                         },
                         plugins: [ChartDataLabels]
@@ -841,6 +846,7 @@
 </body>
 
 </html>
+
 
 
 
