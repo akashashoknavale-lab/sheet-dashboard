@@ -19,7 +19,20 @@
     </script>
     <!-- ================= STYLES ================= -->
     <style>
-            .company-title {
+        .inverter-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #2ecc71;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            }
+            .inverter-btn:hover {
+                background: #27ae60;
+            }
+    
+        .company-title {
             text-align: center;
             font-size: 20px;
             font-weight: bold;
@@ -397,6 +410,11 @@
     </div>
 
     <script>
+        
+        function openInverterPage(){
+            window.location.href = "inverter.html";
+        }
+
         const loginUser = JSON.parse(localStorage.getItem("loginUser"));
 
         function openInverterPage(){
@@ -937,5 +955,6 @@
 </body>
 
 </html>
+
 
 
