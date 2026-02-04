@@ -440,7 +440,23 @@
                 updateView();
             });
 
-         function createFilters() {
+        function isCompletedMonth(monthStr) {
+                // monthStr example: "Apr-25"
+                const [mon, yr] = monthStr.split("-");
+                const monthMap = {
+                    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+                };
+            
+                const monthIndex = monthMap[mon];
+                const year = 2000 + parseInt(yr); // "25" → 2025
+            
+                const monthDate = new Date(year, monthIndex + 1, 0); // last day of month
+                const today = new Date();
+            
+                return monthDate < today; // completed month
+            } 
+        function createFilters() {
             let allowedPlants = new Set();
         
             // 🔑 Clear old selections
@@ -472,19 +488,33 @@
 
 
         function addCheckbox(id, val, set) {
-            const l = document.createElement("label");
-            const c = document.createElement("input");
-            c.type = "checkbox";
-            c.checked = true;
-            set.add(val);
-            c.onchange = () => {
-                c.checked ? set.add(val) : set.delete(val);
-                updateView();
-            };
-            l.appendChild(c);
-            l.append(" " + val);
-            document.getElementById(id).appendChild(l);
-        }
+                const l = document.createElement("label");
+                const c = document.createElement("input");
+                c.type = "checkbox";
+            
+                // ✅ Auto-check only completed months
+                if (id === "monthFilter") {
+                    if (isCompletedMonth(val)) {
+                        c.checked = true;
+                        set.add(val);
+                    } else {
+                        c.checked = false; // incomplete month stays unchecked
+                    }
+                } else {
+                    // plants → default checked
+                    c.checked = true;
+                    set.add(val);
+                }
+            
+                c.onchange = () => {
+                    c.checked ? set.add(val) : set.delete(val);
+                    updateView();
+                };
+            
+                l.appendChild(c);
+                l.append(" " + val);
+                document.getElementById(id).appendChild(l);
+            }
 
         function selectAll(t) {
             const s = t === "plant" ? selectedPlants : selectedMonths;
@@ -905,3 +935,4 @@
 </body>
 
 </html>
+
