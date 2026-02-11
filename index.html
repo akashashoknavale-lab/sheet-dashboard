@@ -441,6 +441,7 @@
         const CUF_EXPECTED_COL = 11;
         const PLANT_AVAIL_COL = 13;
         const GRID_AVAIL_COL = 14;
+        const EX_G_AC_PR = 17;
 
         let allData = [];
         let selectedPlants = new Set();
@@ -602,7 +603,7 @@
                     cufA += parseFloat(r[CUF_ACTUAL_COL]) || 0;
                     cufE += parseFloat(r[CUF_EXPECTED_COL]) || 0;
                     expIRAct += +r[ACTUAL_COL] || 0;
-                    expIRExp += +r[ACTUAL_COL] * (+r[IR_EXPECTED_COL] / (+r[IR_ACTUAL_COL] || 1));
+                    expIRExp += +r[EX_G_AC_PR] || 0));
                     plantAvailSum += +r[PLANT_AVAIL_COL] || 0;
                     gridAvailSum += +r[GRID_AVAIL_COL] || 0;
 
@@ -955,6 +956,7 @@
 </body>
 
 </html>
+
 
 
 
