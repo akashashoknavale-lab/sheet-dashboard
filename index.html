@@ -6,10 +6,10 @@
 <title>Solar Plant Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg:#0d1117; --sb:#161b22; --card:#1c2230; --border:#2d3748;
-  --acc:#f6c90e; --acc2:#38bdf8; --grn:#22c55e; --red:#ef4444;
-  --txt:#e2e8f0; --mut:#94a3b8; --purp:#a78bfa;
+:root{
+  --bg:#0d1117;--sb:#161b22;--card:#1c2230;--border:#2d3748;
+  --acc:#f6c90e;--acc2:#38bdf8;--grn:#22c55e;--red:#ef4444;
+  --txt:#e2e8f0;--mut:#94a3b8;--purp:#a78bfa;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden;}
@@ -38,15 +38,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .topbar-time{font-size:11px;color:var(--mut);}
 .ref-btn{background:rgba(246,201,14,.12);border:1px solid rgba(246,201,14,.3);color:var(--acc);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;}
 .ref-btn:hover{background:rgba(246,201,14,.22);}
-
 #content{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
 .view{display:none;flex-direction:column;gap:14px;}
 .view.active{display:flex;}
 
 /* STATUS */
-.status-bar{background:rgba(246,201,14,.06);border:1px solid rgba(246,201,14,.15);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:7px;}
-.status-bar.err{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);color:#fca5a5;}
-.status-bar.ok{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:#86efac;}
+.sbar{background:rgba(246,201,14,.06);border:1px solid rgba(246,201,14,.15);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:7px;}
+.sbar.err{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);color:#fca5a5;}
+.sbar.ok{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:#86efac;}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(246,201,14,.2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -66,16 +65,27 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tab-row{display:flex;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px;}
 .tab-btn{flex:1;padding:7px 0;border-radius:7px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--mut);transition:all .15s;}
 .tab-btn.active{background:var(--acc);color:#0d1117;}
-
 .itab-row{display:flex;gap:5px;margin-bottom:10px;}
 .itab{padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--mut);font-size:11px;cursor:pointer;transition:all .15s;}
 .itab.active{background:var(--acc2);color:#0d1117;border-color:var(--acc2);font-weight:700;}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;flex-wrap:wrap;}
+.filter-bar label{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;}
+.filter-bar select,.filter-bar input[type=date]{
+  background:#1a2235;border:1px solid var(--border);color:var(--txt);
+  padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;outline:none;
+}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--acc2);}
+.filter-bar input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6);}
+.filter-count{margin-left:auto;font-size:10px;color:var(--mut);}
 
 /* TABLES */
 .dc{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 .dc-hdr{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--mut);display:flex;justify-content:space-between;align-items:center;}
 .dc-hdr span{color:var(--acc);}
 .tw{overflow-x:auto;max-height:300px;overflow-y:auto;}
+.tw-tall{overflow-x:auto;max-height:460px;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;font-size:11px;}
 thead{position:sticky;top:0;z-index:2;}
 th{background:#1a2235;color:var(--mut);padding:7px 9px;text-align:right;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
@@ -104,19 +114,15 @@ tr:hover td{background:rgba(246,201,14,.03);}
     <div class="t1">☀ Solar SCADA</div>
     <div class="t2">Live Plant Monitor</div>
   </div>
-
   <div class="sb-sec">Navigation</div>
-  <div class="sb-item active" onclick="goDash(this)">📊 Dashboard</div>
-  <div class="sb-item" onclick="goTab(this)">📋 Tabular Data</div>
-
+  <div class="sb-item active" id="nav-dash" onclick="goDash()">📊 Dashboard</div>
+  <div class="sb-item" id="nav-tab" onclick="goTab()">📋 Tabular Data</div>
   <div class="sb-sec">MFM Tabular</div>
   <div class="sb-sub" id="sl-mfm-day" onclick="openTabular('mfm','day')">📅 Day Data</div>
   <div class="sb-sub" id="sl-mfm-rep" onclick="openTabular('mfm','report')">📁 Reports</div>
-
   <div class="sb-sec">Inverter Tabular</div>
   <div class="sb-sub" id="sl-inv-day" onclick="openTabular('inv','day')">📅 Day Data</div>
   <div class="sb-sub" id="sl-inv-rep" onclick="openTabular('inv','report')">📁 Reports</div>
-
   <div class="sb-footer">
     <span class="dot"></span>Auto-refresh: 5 min<br>
     <span id="sb-ts" style="font-size:9px;opacity:.7;">—</span>
@@ -136,8 +142,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
     <!-- ═══ DASHBOARD ═══ -->
     <div class="view active" id="view-dash">
-
-      <div class="status-bar" id="sbar"><span class="spin"></span> डेटा लोड होत आहे...</div>
+      <div class="sbar" id="sbar"><span class="spin"></span> डेटा लोड होत आहे...</div>
 
       <div class="cards-row">
         <div class="card">
@@ -171,33 +176,31 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <button class="tab-btn" id="dtab-inv" onclick="switchDash('inv')">🔌 Inverter Data</button>
       </div>
 
-      <!-- MFM live table -->
+      <!-- MFM live -->
       <div class="dc" id="dp-mfm">
-        <div class="dc-hdr">MFM — <span>4 Meters Live</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div class="dc-hdr">MFM — <span>Latest Live Reading</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
           <table>
             <thead><tr>
               <th>Device</th><th>Vr (V)</th><th>Vy (V)</th><th>Vb (V)</th>
               <th>Ir (A)</th><th>Iy (A)</th><th>Ib (A)</th>
-              <th>kW</th><th>kVAR</th><th>kVA</th><th>PF</th><th>Freq</th>
-              <th>Import kWh</th><th>Export kWh</th><th>Status</th>
+              <th>kW</th><th>kVAR</th><th>kVA</th>
+              <th>PF</th><th>Freq</th><th>ikWh</th><th>ekWh</th><th>Status</th>
             </tr></thead>
             <tbody id="mfm-live-body"><tr><td colspan="15" class="pm">लोड होत आहे...</td></tr></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Inverter live table -->
+      <!-- Inverter live -->
       <div class="dc" id="dp-inv" style="display:none">
-        <div class="dc-hdr">Inverters — <span>All Live</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div class="dc-hdr">Inverters — <span>Latest Live Reading</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
           <table>
             <thead><tr>
-              <th>Device</th>
-              <th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th><th>DC kWh</th>
-              <th>Total kWh</th><th>Temp (°C)</th>
-              <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th>
-              <th>Status</th>
+              <th>Device</th><th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th>
+              <th>DC kWh</th><th>Total kWh</th><th>Temp (°C)</th>
+              <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>Status</th>
             </tr></thead>
             <tbody id="inv-live-body"><tr><td colspan="13" class="pm">लोड होत आहे...</td></tr></tbody>
           </table>
@@ -209,7 +212,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <div class="chart-title">All Inverters — <b>DC Input Power (Win kW)</b></div>
         <div class="chart-wrap"><canvas id="invChart"></canvas></div>
       </div>
-
     </div>
 
     <!-- ═══ TABULAR ═══ -->
@@ -227,18 +229,28 @@ tr:hover td{background:rgba(246,201,14,.03);}
           <button class="itab" id="tm-rep" onclick="switchTabSub('mfm','report')">📁 Reports</button>
         </div>
         <div id="tp-mfm-day">
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <label>Device</label>
+            <select id="mfm-dev-filter" onchange="renderMfmDay()">
+              <option value="ALL">All MFM</option>
+            </select>
+            <label>Date</label>
+            <input type="date" id="mfm-date-filter" onchange="renderMfmDay()"/>
+            <span class="filter-count" id="mfm-row-count"></span>
+          </div>
           <div class="dc">
             <div class="dc-hdr">MFM — <span>Day Data (5-min intervals)</span></div>
-            <div class="tw" style="max-height:450px">
+            <div class="tw-tall">
               <table>
                 <thead><tr>
                   <th>Time</th><th>Device</th>
                   <th>Vr</th><th>Vy</th><th>Vb</th>
                   <th>Ir</th><th>Iy</th><th>Ib</th>
-                  <th>kW</th><th>kVAR</th><th>kVA</th><th>PF</th><th>Freq</th>
-                  <th>ikwh</th><th>ekwh</th><th>Status</th>
+                  <th>kW</th><th>kVAR</th><th>kVA</th>
+                  <th>PF</th><th>Freq</th><th>ikWh</th><th>ekWh</th><th>Status</th>
                 </tr></thead>
-                <tbody id="mfm-day-body"><tr><td colspan="16" class="pm">डेटा येत आहे — refresh होताच दिसेल</td></tr></tbody>
+                <tbody id="mfm-day-body"><tr><td colspan="16" class="pm">डेटा लोड होत आहे...</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -255,18 +267,27 @@ tr:hover td{background:rgba(246,201,14,.03);}
           <button class="itab" id="ti-rep" onclick="switchTabSub('inv','report')">📁 Reports</button>
         </div>
         <div id="tp-inv-day">
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <label>Device</label>
+            <select id="inv-dev-filter" onchange="renderInvDay()">
+              <option value="ALL">All Inverters</option>
+            </select>
+            <label>Date</label>
+            <input type="date" id="inv-date-filter" onchange="renderInvDay()"/>
+            <span class="filter-count" id="inv-row-count"></span>
+          </div>
           <div class="dc">
             <div class="dc-hdr">Inverter — <span>Day Data (5-min intervals)</span></div>
-            <div class="tw" style="max-height:450px">
+            <div class="tw-tall">
               <table>
                 <thead><tr>
                   <th>Time</th><th>Device</th>
                   <th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th>
                   <th>DC kWh</th><th>Total kWh</th><th>Temp</th>
-                  <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th>
-                  <th>Status</th>
+                  <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>Status</th>
                 </tr></thead>
-                <tbody id="inv-day-body"><tr><td colspan="14" class="pm">डेटा येत आहे — refresh होताच दिसेल</td></tr></tbody>
+                <tbody id="inv-day-body"><tr><td colspan="14" class="pm">डेटा लोड होत आहे...</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -277,24 +298,16 @@ tr:hover td{background:rgba(246,201,14,.03);}
       </div>
 
     </div>
-
   </div>
 </div>
 
 <script>
-// ── CONFIG ──
 const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSZOBtMJNZc3UXC8A1tFiv2gHr8mv_SNDFFjfN1bILLpIeL70JyECYRIEJ8yErMvjXO7rKAw4OfxdcMjritYp8_VMs3P_nESIHZ89AY4GYXW-L8zJ-e4Dzp-mD38ukB1DMl3Ew2U5lOI_tW6YRaStwiLV3n2zBziGBwXiM3KvoLr0geEIi2t5tfValxSwB7WwuPsEkg8E7JuwT1PSiga6Yinpmn3fOy8ogiEK03ng0igem7Vv9p-05X7-N5jF2Vr4w3CbizdWfOwP4zmjc9eXubRJu9-Q&lib=MJ5HZeqMKRWvhcsmOGO96nZHe6fVZ7h-Z";
 const REFRESH = 5*60*1000;
 
-// Column index map (0-based) from header:
-// Timestamp,companyname,sitename,DeviceName,DeviceType,
-// vr,vy,vb,ir,iy,ib,wr,wy,wb,f,pf,ikwh,ekwh,
-// v,i,w,va,var,wh,vah,varh,Status,
-// vin,iin,win,dkwh,tkwh,temp,
-// mv1,mv2,mv3,mv4,mv5,mv6,mv7,mv8,mv9,mv10,mv11,mv12,
-// s1..s32
+// Column indices
 const C = {
-  ts:0, company:1, site:2, name:3, type:4,
+  ts:0,company:1,site:2,name:3,type:4,
   vr:5,vy:6,vb:7,ir:8,iy:9,ib:10,
   wr:11,wy:12,wb:13,f:14,pf:15,ikwh:16,ekwh:17,
   v:18,i:19,w:20,va:21,varC:22,wh:23,vah:24,varh:25,status:26,
@@ -303,212 +316,255 @@ const C = {
 };
 
 let chart = null;
-let mfmHistory = [], invHistory = [];
+// All historical rows stored here
+let allMfmRows = [];  // { dateStr, timeStr, row }
+let allInvRows = [];
 
-// ── INIT ──
 window.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     document.getElementById('clock').textContent =
       new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'});
   }, 1000);
+  // Set today's date as default in both date pickers
+  const today = todayStr();
+  document.getElementById('mfm-date-filter').value = today;
+  document.getElementById('inv-date-filter').value = today;
   initChart();
   fetchData();
   setInterval(fetchData, REFRESH);
 });
 
-// ── PARSE CSV ──
-function parseCSV(raw) {
-  // Split by lines, group into record blocks (each record may span multiple lines)
-  // Pattern: date line then data line(s)
-  // Actually from screenshot: each record is: timestamp line \n data line
-  // But more robustly: split all lines, skip date-only lines (dd-mm-yyyy), parse data lines
-  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
-  const rows = [];
-  let headers = null;
-
-  for(let i=0;i<lines.length;i++){
-    const l = lines[i];
-    // Header line
-    if(!headers && l.startsWith('Timestamp')){
-      headers = smartSplit(l);
-      continue;
-    }
-    // Date-only line like "12-06-2026" — skip
-    if(/^\d{2}-\d{2}-\d{4}$/.test(l)) continue;
-    // Data line
-    if(headers && l.length > 10 && !l.startsWith('Timestamp')){
-      const cols = smartSplit(l);
-      if(cols.length >= 5){
-        rows.push(cols);
-      }
-    }
-  }
-  return {headers, rows};
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function smartSplit(line){
-  // Split by comma but handle potential quoted fields
-  return line.split(',');
+// Parse "12-06-2026" → "2026-06-12" for date input comparison
+function normDate(raw) {
+  if(!raw) return '';
+  // format dd-mm-yyyy → yyyy-mm-dd
+  const m = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if(m) return m[3]+'-'+m[2]+'-'+m[1];
+  // already yyyy-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.substring(0,10);
+  return raw;
 }
 
 // ── FETCH ──
-async function fetchData(){
+async function fetchData() {
   setStatus('loading','डेटा लोड होत आहे...');
-  try{
-    const r = await fetch(DATA_URL + '&_nc=' + Date.now());
+  try {
+    const r = await fetch(DATA_URL + '&_nc='+Date.now());
     if(!r.ok) throw new Error('HTTP '+r.status);
     const text = await r.text();
     processCSV(text);
     const ts = new Date().toLocaleTimeString('en-IN');
     setStatus('ok','✅ Updated: '+ts);
     document.getElementById('sb-ts').textContent = 'Last: '+ts;
-  }catch(e){
-    setStatus('err','❌ '+e.message+' — Check CORS settings in Apps Script (doGet must allow all)');
+  } catch(e) {
+    setStatus('err','❌ '+e.message);
   }
 }
 
-function processCSV(raw){
-  const {rows} = parseCSV(raw);
-  const mfmRows = rows.filter(r => (r[C.type]||'').trim().toUpperCase()==='MFM');
-  const invRows = rows.filter(r => (r[C.type]||'').trim().toUpperCase()==='INVERTER');
+function processCSV(raw) {
+  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
+  const dataRows = [];
+  let currentDate = '';
 
-  // ── Cards ──
+  for(let i=0;i<lines.length;i++) {
+    const l = lines[i];
+    if(l.startsWith('Timestamp')) continue; // header
+    if(/^\d{2}-\d{2}-\d{4}$/.test(l)) { currentDate = l; continue; } // date line
+    if(l.length > 10) {
+      const cols = l.split(',');
+      if(cols.length >= 5) dataRows.push({ dateStr: currentDate, cols });
+    }
+  }
+
+  const mfm = dataRows.filter(d=>(d.cols[C.type]||'').trim().toUpperCase()==='MFM');
+  const inv = dataRows.filter(d=>(d.cols[C.type]||'').trim().toUpperCase()==='INVERTER');
+
+  // ── Live data = latest snapshot per device ──
+  // Group by device name, keep last occurrence
+  const latestMfm = latestPerDevice(mfm);
+  const latestInv = latestPerDevice(inv);
+
+  // ── Cards from latest MFM ──
   let totalKW=0, totalEkwh=0;
-  mfmRows.forEach(r=>{
+  latestMfm.forEach(({cols:r})=>{
     const kw = parseFloat(r[C.w]||0);
     const kwh = parseFloat(r[C.ekwh]||0);
     if(kw>0) totalKW+=kw;
     if(kwh>0) totalEkwh+=kwh;
   });
-  // Convert W to kW if values look like W (>1000 for plausible kW reading)
-  const kwDisp = totalKW > 10000 ? (totalKW/1000).toFixed(2) : totalKW.toFixed(2);
-  const kwhDisp = totalEkwh > 1000000 ? (totalEkwh/1000).toFixed(2) : totalEkwh.toFixed(2);
-  document.getElementById('c-kw').textContent = kwDisp || '—';
-  document.getElementById('c-kwh').textContent = kwhDisp || '—';
+  document.getElementById('c-kw').textContent = totalKW ? scaleKW(totalKW) : '—';
+  document.getElementById('c-kwh').textContent = totalEkwh ? scaleKWh(totalEkwh) : '—';
 
-  // ── Timestamp display ──
-  const lastTs = rows.length ? (rows[rows.length-1][C.ts]||'') : '';
-  document.getElementById('mfm-ts').textContent = lastTs ? ' — '+lastTs : '';
-  document.getElementById('inv-ts').textContent = lastTs ? ' — '+lastTs : '';
+  // Timestamp
+  const lastTs = latestMfm.length ? (latestMfm[latestMfm.length-1].cols[C.ts]||'') : '';
+  document.getElementById('mfm-ts').textContent = lastTs ? '  '+lastTs : '';
+  document.getElementById('inv-ts').textContent = lastTs ? '  '+lastTs : '';
 
-  // ── MFM Live Table ──
+  // ── Live MFM table ──
   const mb = document.getElementById('mfm-live-body');
-  if(mfmRows.length){
-    mb.innerHTML = mfmRows.map(r=>{
-      const kw = parseFloat(r[C.w]||0);
-      const kwDisp = kw>1000?(kw/1000).toFixed(3):kw.toFixed(3);
-      const va = parseFloat(r[C.va]||0);
-      const vaDisp = va>1000?(va/1000).toFixed(3):va.toFixed(3);
-      const varV = parseFloat(r[C.varC]||0);
-      const varDisp = varV>1000?(varV/1000).toFixed(3):varV.toFixed(3);
-      const ekwh = parseFloat(r[C.ekwh]||0);
-      const ekwhDisp = ekwh>1000000?(ekwh/1000000).toFixed(3):ekwh>1000?(ekwh/1000).toFixed(3):ekwh.toFixed(3);
-      const ikwh = parseFloat(r[C.ikwh]||0);
-      const ikwhDisp = ikwh>1000000?(ikwh/1000000).toFixed(3):ikwh>1000?(ikwh/1000).toFixed(3):ikwh.toFixed(3);
-      return `<tr>
-        <td>${r[C.name]||'—'}</td>
-        <td>${n(r[C.vr])}</td><td>${n(r[C.vy])}</td><td>${n(r[C.vb])}</td>
-        <td>${n(r[C.ir])}</td><td>${n(r[C.iy])}</td><td>${n(r[C.ib])}</td>
-        <td class="${kw>0?'pos':kw<0?'neg':''}">${kwDisp}</td>
-        <td>${varDisp}</td><td>${vaDisp}</td>
-        <td>${n(r[C.pf])}</td><td>${n(r[C.f])}</td>
-        <td>${ikwhDisp}</td><td>${ekwhDisp}</td>
-        <td>${r[C.status]||'—'}</td>
-      </tr>`;
-    }).join('');
-  } else {
-    mb.innerHTML='<tr><td colspan="15" class="pm">MFM डेटा नाही</td></tr>';
-  }
+  mb.innerHTML = latestMfm.length
+    ? latestMfm.map(({cols:r})=>mfmRow(r)).join('')
+    : '<tr><td colspan="15" class="pm">MFM डेटा नाही</td></tr>';
 
-  // ── Inverter Live Table ──
+  // ── Live Inverter table ──
   const ib = document.getElementById('inv-live-body');
-  if(invRows.length){
-    ib.innerHTML = invRows.map(r=>{
-      const win = parseFloat(r[C.win]||0);
-      return `<tr>
-        <td>${r[C.name]||'—'}</td>
-        <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td>
-        <td class="${win>0?'pos':''}">${n(r[C.win])}</td>
-        <td>${n(r[C.dkwh])}</td><td>${n(r[C.tkwh])}</td>
-        <td>${n(r[C.temp])}</td>
-        <td>${n(r[C.mv1])}</td><td>${n(r[C.mv2])}</td>
-        <td>${n(r[C.mv3])}</td><td>${n(r[C.mv4])}</td><td>${n(r[C.mv5])}</td>
-        <td>${r[C.status]||'—'}</td>
-      </tr>`;
-    }).join('');
-    updateChart(invRows);
-  } else {
-    ib.innerHTML='<tr><td colspan="13" class="pm">Inverter डेटा नाही</td></tr>';
-  }
+  ib.innerHTML = latestInv.length
+    ? latestInv.map(({cols:r})=>invRow(r)).join('')
+    : '<tr><td colspan="13" class="pm">Inverter डेटा नाही</td></tr>';
 
-  // ── Day History ──
-  if(mfmRows.length) mfmHistory.push({ts: new Date().toLocaleTimeString('en-IN'), rows: mfmRows});
-  if(invRows.length) invHistory.push({ts: new Date().toLocaleTimeString('en-IN'), rows: invRows});
-  renderHistory();
+  if(latestInv.length) updateChart(latestInv.map(d=>d.cols));
+
+  // ── Store history ──
+  // Merge new rows into allMfmRows / allInvRows (avoid duplicates by ts+name)
+  mergeHistory(allMfmRows, mfm);
+  mergeHistory(allInvRows, inv);
+
+  // ── Populate device dropdowns ──
+  populateDropdown('mfm-dev-filter', allMfmRows, 'All MFM');
+  populateDropdown('inv-dev-filter', allInvRows, 'All Inverters');
+
+  // ── Render day tables ──
+  renderMfmDay();
+  renderInvDay();
 }
 
-function n(v){
-  if(v===null||v===undefined||v==='') return '—';
-  const f=parseFloat(v);
-  return isNaN(f)?v:f.toFixed(2);
+function latestPerDevice(rows) {
+  const map = new Map();
+  rows.forEach(d => {
+    const name = d.cols[C.name]||'';
+    map.set(name, d);
+  });
+  return [...map.values()];
 }
 
-// ── HISTORY TABLES ──
-function renderHistory(){
-  // MFM Day
-  const md = document.getElementById('mfm-day-body');
-  if(mfmHistory.length){
-    md.innerHTML=[...mfmHistory].reverse().flatMap(e=>
-      e.rows.map(r=>`<tr>
-        <td>${e.ts}</td><td>${r[C.name]||'—'}</td>
+function mergeHistory(store, newRows) {
+  newRows.forEach(d => {
+    const key = (d.cols[C.ts]||'')+'|'+(d.cols[C.name]||'')+'|'+(d.dateStr||'');
+    if(!store.find(x=>x.key===key)) {
+      store.push({key, dateStr: d.dateStr, cols: d.cols});
+    }
+  });
+}
+
+function populateDropdown(id, store, allLabel) {
+  const sel = document.getElementById(id);
+  const current = sel.value;
+  const devices = [...new Set(store.map(d=>d.cols[C.name]||''))].filter(Boolean).sort();
+  sel.innerHTML = `<option value="ALL">${allLabel}</option>`
+    + devices.map(d=>`<option value="${d}">${d}</option>`).join('');
+  if(devices.includes(current)) sel.value = current;
+}
+
+// ── Day table renderers ──
+function renderMfmDay() {
+  const dev = document.getElementById('mfm-dev-filter').value;
+  const date = document.getElementById('mfm-date-filter').value; // yyyy-mm-dd
+  const filtered = allMfmRows.filter(d => {
+    const devOk = dev==='ALL' || (d.cols[C.name]||'')=== dev;
+    const dateOk = !date || normDate(d.dateStr)===date || normDate(d.cols[C.ts])===date;
+    return devOk && dateOk;
+  });
+  // Sort by timestamp asc
+  filtered.sort((a,b)=>(a.cols[C.ts]||'').localeCompare(b.cols[C.ts]||''));
+
+  document.getElementById('mfm-row-count').textContent = filtered.length+' records';
+  const body = document.getElementById('mfm-day-body');
+  body.innerHTML = filtered.length
+    ? filtered.map(({cols:r})=>`<tr>
+        <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>
         <td>${n(r[C.vr])}</td><td>${n(r[C.vy])}</td><td>${n(r[C.vb])}</td>
         <td>${n(r[C.ir])}</td><td>${n(r[C.iy])}</td><td>${n(r[C.ib])}</td>
-        <td>${n(r[C.w])}</td><td>${n(r[C.varC])}</td><td>${n(r[C.va])}</td>
+        <td class="${parseFloat(r[C.w]||0)>0?'pos':parseFloat(r[C.w]||0)<0?'neg':''}">${n(r[C.w])}</td>
+        <td>${n(r[C.varC])}</td><td>${n(r[C.va])}</td>
         <td>${n(r[C.pf])}</td><td>${n(r[C.f])}</td>
         <td>${n(r[C.ikwh])}</td><td>${n(r[C.ekwh])}</td>
         <td>${r[C.status]||'—'}</td>
-      </tr>`)
-    ).join('');
-  }
-  // Inv Day
-  const id = document.getElementById('inv-day-body');
-  if(invHistory.length){
-    id.innerHTML=[...invHistory].reverse().flatMap(e=>
-      e.rows.map(r=>`<tr>
-        <td>${e.ts}</td><td>${r[C.name]||'—'}</td>
-        <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td><td>${n(r[C.win])}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="16" class="pm">या filter साठी डेटा नाही</td></tr>';
+}
+
+function renderInvDay() {
+  const dev = document.getElementById('inv-dev-filter').value;
+  const date = document.getElementById('inv-date-filter').value;
+  const filtered = allInvRows.filter(d => {
+    const devOk = dev==='ALL' || (d.cols[C.name]||'')=== dev;
+    const dateOk = !date || normDate(d.dateStr)===date || normDate(d.cols[C.ts])===date;
+    return devOk && dateOk;
+  });
+  filtered.sort((a,b)=>(a.cols[C.ts]||'').localeCompare(b.cols[C.ts]||''));
+
+  document.getElementById('inv-row-count').textContent = filtered.length+' records';
+  const body = document.getElementById('inv-day-body');
+  body.innerHTML = filtered.length
+    ? filtered.map(({cols:r})=>`<tr>
+        <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>
+        <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td>
+        <td class="${parseFloat(r[C.win]||0)>0?'pos':''}">${n(r[C.win])}</td>
         <td>${n(r[C.dkwh])}</td><td>${n(r[C.tkwh])}</td><td>${n(r[C.temp])}</td>
         <td>${n(r[C.mv1])}</td><td>${n(r[C.mv2])}</td>
         <td>${n(r[C.mv3])}</td><td>${n(r[C.mv4])}</td><td>${n(r[C.mv5])}</td>
         <td>${r[C.status]||'—'}</td>
-      </tr>`)
-    ).join('');
-  }
+      </tr>`).join('')
+    : '<tr><td colspan="14" class="pm">या filter साठी डेटा नाही</td></tr>';
 }
 
-// ── CHART ──
+// ── Row builders ──
+function mfmRow(r) {
+  const kw=parseFloat(r[C.w]||0);
+  return `<tr>
+    <td>${r[C.name]||'—'}</td>
+    <td>${n(r[C.vr])}</td><td>${n(r[C.vy])}</td><td>${n(r[C.vb])}</td>
+    <td>${n(r[C.ir])}</td><td>${n(r[C.iy])}</td><td>${n(r[C.ib])}</td>
+    <td class="${kw>0?'pos':kw<0?'neg':''}">${n(r[C.w])}</td>
+    <td>${n(r[C.varC])}</td><td>${n(r[C.va])}</td>
+    <td>${n(r[C.pf])}</td><td>${n(r[C.f])}</td>
+    <td>${n(r[C.ikwh])}</td><td>${n(r[C.ekwh])}</td>
+    <td>${r[C.status]||'—'}</td>
+  </tr>`;
+}
+function invRow(r) {
+  const win=parseFloat(r[C.win]||0);
+  return `<tr>
+    <td>${r[C.name]||'—'}</td>
+    <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td>
+    <td class="${win>0?'pos':''}">${n(r[C.win])}</td>
+    <td>${n(r[C.dkwh])}</td><td>${n(r[C.tkwh])}</td><td>${n(r[C.temp])}</td>
+    <td>${n(r[C.mv1])}</td><td>${n(r[C.mv2])}</td>
+    <td>${n(r[C.mv3])}</td><td>${n(r[C.mv4])}</td><td>${n(r[C.mv5])}</td>
+    <td>${r[C.status]||'—'}</td>
+  </tr>`;
+}
+
+// ── Helpers ──
+function n(v){
+  if(v===null||v===undefined||v==='') return '—';
+  const f=parseFloat(v); return isNaN(f)?v:f.toFixed(2);
+}
+function scaleKW(v){ return v>10000?(v/1000).toFixed(2):v.toFixed(2); }
+function scaleKWh(v){ return v>1000000?(v/1000000).toFixed(3)+' MWh':v>1000?(v/1000).toFixed(3)+' MWh':v.toFixed(2); }
+
+// ── Chart ──
 function initChart(){
   const ctx=document.getElementById('invChart').getContext('2d');
   chart=new Chart(ctx,{
     type:'bar',
-    data:{labels:[],datasets:[{
-      label:'Win (kW)',data:[],
-      backgroundColor:'rgba(246,201,14,0.75)',
-      borderColor:'rgba(246,201,14,1)',
-      borderWidth:1,borderRadius:4
-    }]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
+    data:{labels:[],datasets:[{label:'Win (kW)',data:[],
+      backgroundColor:'rgba(246,201,14,0.75)',borderColor:'rgba(246,201,14,1)',
+      borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
         x:{ticks:{color:'#94a3b8',font:{size:9}},grid:{color:'rgba(45,55,72,.4)'}},
         y:{ticks:{color:'#94a3b8',font:{size:9}},grid:{color:'rgba(45,55,72,.4)'},beginAtZero:true,
            title:{display:true,text:'kW',color:'#94a3b8',font:{size:10}}}
-      }
-    }
+      }}
   });
 }
-
 function updateChart(rows){
   if(!chart) return;
   chart.data.labels = rows.map(r=>r[C.name]||'?');
@@ -516,38 +572,40 @@ function updateChart(rows){
   chart.update();
 }
 
-// ── STATUS ──
+// ── Status ──
 function setStatus(type,msg){
   const el=document.getElementById('sbar');
-  el.className='status-bar'+(type==='err'?' err':type==='ok'?' ok':'');
+  el.className='sbar'+(type==='err'?' err':type==='ok'?' ok':'');
   el.innerHTML=(type==='loading'?'<span class="spin"></span>':'')+msg;
 }
 
-// ── NAV ──
-function goDash(el){
-  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
-  el.classList.add('active');
+// ── Navigation ──
+function goDash(){
+  setNavActive('nav-dash');
   document.getElementById('page-title').textContent='Dashboard Overview';
   showView('dash');
 }
-function goTab(el){
-  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
-  el.classList.add('active');
+function goTab(){
+  setNavActive('nav-tab');
   document.getElementById('page-title').textContent='Tabular Data';
   showView('tab');
 }
-function showView(v){
-  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
-  document.getElementById('view-'+v).classList.add('active');
-}
 function openTabular(type,sub){
-  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  setNavActive('nav-tab');
   document.querySelectorAll('.sb-sub').forEach(e=>e.classList.remove('active'));
   document.getElementById('sl-'+type+'-'+(sub==='day'?'day':'rep')).classList.add('active');
   document.getElementById('page-title').textContent='Tabular Data';
   showView('tab');
   switchTabMain(type);
   switchTabSub(type,sub);
+}
+function setNavActive(id){
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
 }
 function switchDash(t){
   document.getElementById('dtab-mfm').classList.toggle('active',t==='mfm');
