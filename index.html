@@ -1,526 +1,578 @@
 <!DOCTYPE html>
-<html lang="mr">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MFM Energy Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Solar Plant Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:       #0f1117;
-    --surface:  #181c27;
-    --surface2: #1e2333;
-    --border:   rgba(255,255,255,0.08);
-    --border2:  rgba(255,255,255,0.14);
-    --text:     #e8eaf0;
-    --muted:    #7a8099;
-    --accent:   #3b82f6;
-    --accent2:  #60a5fa;
-    --green:    #22c55e;
-    --amber:    #f59e0b;
-    --red:      #ef4444;
-    --radius:   10px;
-    --radius-sm:6px;
-  }
-  html, body { height: 100%; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    font-size: 14px; line-height: 1.5;
-    display: flex; flex-direction: column;
-  }
+:root {
+  --bg:#0d1117; --sb:#161b22; --card:#1c2230; --border:#2d3748;
+  --acc:#f6c90e; --acc2:#38bdf8; --grn:#22c55e; --red:#ef4444;
+  --txt:#e2e8f0; --mut:#94a3b8; --purp:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden;}
 
-  /* HEADER */
-  header {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 20px; border-bottom: 1px solid var(--border);
-    background: var(--surface); flex-shrink: 0;
-  }
-  .logo {
-    width: 32px; height: 32px; background: var(--accent);
-    border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700; color: #fff;
-  }
-  header h1 { font-size: 15px; font-weight: 600; }
-  header .sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
-  .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-  #refresh-info { font-size: 11px; color: var(--muted); }
-  #refresh-info span { color: var(--accent2); font-weight: 600; }
-  #status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--muted); flex-shrink: 0;
-    transition: background .3s, box-shadow .3s;
-  }
-  #status-dot.ok      { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  #status-dot.err     { background: var(--red);   box-shadow: 0 0 6px var(--red); }
-  #status-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+/* SIDEBAR */
+#sidebar{width:210px;min-width:210px;background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.sb-logo{padding:16px;border-bottom:1px solid var(--border);}
+.sb-logo .t1{font-size:14px;font-weight:700;color:var(--acc);}
+.sb-logo .t2{font-size:10px;color:var(--mut);margin-top:2px;}
+.sb-sec{font-size:9px;font-weight:700;letter-spacing:1.2px;color:var(--mut);text-transform:uppercase;padding:12px 14px 5px;}
+.sb-item{padding:8px 14px;font-size:12px;cursor:pointer;color:var(--mut);display:flex;align-items:center;gap:7px;border-left:3px solid transparent;transition:all .15s;}
+.sb-item:hover{background:rgba(246,201,14,.06);color:var(--txt);}
+.sb-item.active{color:var(--acc);border-left-color:var(--acc);background:rgba(246,201,14,.08);}
+.sb-sub{padding:7px 14px 7px 32px;font-size:11px;cursor:pointer;color:var(--mut);display:flex;align-items:center;gap:6px;border-left:3px solid transparent;transition:all .15s;}
+.sb-sub:hover{background:rgba(56,189,248,.06);color:var(--txt);}
+.sb-sub.active{color:var(--acc2);border-left-color:var(--acc2);background:rgba(56,189,248,.08);}
+.sb-footer{margin-top:auto;padding:10px 14px;border-top:1px solid var(--border);font-size:10px;color:var(--mut);}
+.dot{display:inline-block;width:6px;height:6px;background:var(--grn);border-radius:50%;margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  /* LAYOUT */
-  .layout { display: flex; flex: 1; overflow: hidden; }
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--sb);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;justify-content:space-between;min-height:46px;}
+.topbar-title{font-size:13px;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.topbar-time{font-size:11px;color:var(--mut);}
+.ref-btn{background:rgba(246,201,14,.12);border:1px solid rgba(246,201,14,.3);color:var(--acc);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;}
+.ref-btn:hover{background:rgba(246,201,14,.22);}
 
-  /* SIDEBAR */
-  .sidebar {
-    width: 165px; flex-shrink: 0;
-    background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; padding: 14px 0;
-  }
-  .sidebar-label {
-    font-size: 10px; font-weight: 600; color: var(--muted);
-    text-transform: uppercase; letter-spacing: .07em;
-    padding: 0 16px 8px;
-  }
-  .nav-btn {
-    display: flex; align-items: center; gap: 9px;
-    padding: 9px 16px; font-size: 13px; font-weight: 500;
-    color: var(--muted); background: none; border: none;
-    width: 100%; text-align: left; cursor: pointer;
-    border-left: 2px solid transparent;
-    transition: color .15s, background .15s;
-  }
-  .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-  .nav-btn:hover { color: var(--text); background: var(--surface2); }
-  .nav-btn.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(59,130,246,.08); }
-  .sidebar-section { margin-top: 18px; padding: 0 12px; }
-  .sidebar-section label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; }
-  .sidebar-section select {
-    width: 100%; padding: 6px 8px;
-    background: var(--surface2); border: 1px solid var(--border2);
-    border-radius: var(--radius-sm); color: var(--text); font-size: 12px;
-    cursor: pointer; outline: none;
-  }
+#content{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
+.view{display:none;flex-direction:column;gap:14px;}
+.view.active{display:flex;}
 
-  /* MAIN */
-  .main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+/* STATUS */
+.status-bar{background:rgba(246,201,14,.06);border:1px solid rgba(246,201,14,.15);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:7px;}
+.status-bar.err{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);color:#fca5a5;}
+.status-bar.ok{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:#86efac;}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(246,201,14,.2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* STAT STRIP */
-  .stat-strip {
-    display: flex; gap: 10px; padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface); flex-shrink: 0;
-  }
-  .stat-card {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 9px 13px; min-width: 105px;
-  }
-  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-  .stat-val   { font-size: 19px; font-weight: 700; margin-top: 2px; }
-  .stat-val.accent { color: var(--accent2); }
-  .stat-val.green  { color: var(--green); }
-  .stat-val.amber  { color: var(--amber); }
+/* CARDS */
+.cards-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--acc);border-radius:10px 10px 0 0;}
+.card.blue::before{background:var(--acc2);}
+.card.green::before{background:var(--grn);}
+.card.purple::before{background:var(--purp);}
+.card-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);margin-bottom:7px;}
+.card-val{font-size:24px;font-weight:700;line-height:1;}
+.card-unit{font-size:11px;color:var(--mut);margin-top:3px;}
+.card-ico{position:absolute;right:12px;top:12px;font-size:18px;opacity:.2;}
 
-  /* PANELS */
-  .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
-  .panel.active { display: flex; }
+/* TABS */
+.tab-row{display:flex;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px;}
+.tab-btn{flex:1;padding:7px 0;border-radius:7px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--mut);transition:all .15s;}
+.tab-btn.active{background:var(--acc);color:#0d1117;}
 
-  /* CHART PANEL */
-  .chart-toolbar {
-    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
-    padding: 9px 16px; border-bottom: 1px solid var(--border);
-    background: var(--surface); flex-shrink: 0;
-  }
-  .chart-toolbar .lbl { font-size: 11px; color: var(--muted); margin-right: 2px; }
-  .pill {
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
-    background: var(--surface2); color: var(--muted);
-    border: 1px solid var(--border2); cursor: pointer;
-    transition: background .12s, color .12s, border-color .12s;
-  }
-  .pill:hover { color: var(--text); }
-  .pill.on { background: rgba(59,130,246,.18); color: var(--accent2); border-color: var(--accent); }
-  .chart-area { flex: 1; padding: 14px 16px; position: relative; }
-  #mfmChart { width: 100% !important; height: 100% !important; }
+.itab-row{display:flex;gap:5px;margin-bottom:10px;}
+.itab{padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--mut);font-size:11px;cursor:pointer;transition:all .15s;}
+.itab.active{background:var(--acc2);color:#0d1117;border-color:var(--acc2);font-weight:700;}
 
-  /* TABLE PANEL */
-  .table-toolbar {
-    padding: 9px 16px; border-bottom: 1px solid var(--border);
-    background: var(--surface); flex-shrink: 0;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .table-toolbar input {
-    padding: 6px 10px; background: var(--bg); border: 1px solid var(--border2);
-    border-radius: var(--radius-sm); color: var(--text); font-size: 12.5px;
-    width: 200px; outline: none;
-  }
-  .table-toolbar input:focus { border-color: var(--accent); }
-  .table-area { flex: 1; overflow: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  thead th {
-    position: sticky; top: 0; z-index: 2;
-    background: var(--surface); padding: 8px 10px;
-    text-align: left; font-size: 10.5px; font-weight: 600;
-    color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
-    border-bottom: 1px solid var(--border2); white-space: nowrap;
-    cursor: pointer; user-select: none;
-  }
-  thead th:hover { color: var(--text); }
-  tbody tr { border-bottom: 1px solid var(--border); }
-  tbody tr:hover td { background: rgba(255,255,255,.03); }
-  tbody td { padding: 7px 10px; color: var(--text); white-space: nowrap; }
-  tbody td.time-col { font-weight: 600; color: var(--accent2); }
-  tbody td.num { font-variant-numeric: tabular-nums; text-align: right; }
-  tbody td.neg { color: var(--red); }
-  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
-  .badge-ok { background: rgba(34,197,94,.15); color: #4ade80; }
+/* TABLES */
+.dc{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.dc-hdr{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--mut);display:flex;justify-content:space-between;align-items:center;}
+.dc-hdr span{color:var(--acc);}
+.tw{overflow-x:auto;max-height:300px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+thead{position:sticky;top:0;z-index:2;}
+th{background:#1a2235;color:var(--mut);padding:7px 9px;text-align:right;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+th:first-child{text-align:left;}
+td{padding:6px 9px;text-align:right;border-bottom:1px solid rgba(45,55,72,.4);color:var(--txt);white-space:nowrap;font-size:11px;}
+td:first-child{text-align:left;color:var(--mut);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(246,201,14,.03);}
+.pos{color:var(--grn);} .neg{color:var(--red);}
+.pm{padding:28px;text-align:center;color:var(--mut);font-size:11px;}
 
-  /* EMPTY */
-  .empty-state {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 12px; flex: 1;
-    color: var(--muted); font-size: 13px;
-  }
-  .empty-state svg { width: 44px; height: 44px; opacity: .3; }
+/* CHART */
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.chart-title{font-size:11px;font-weight:600;color:var(--mut);margin-bottom:12px;}
+.chart-title b{color:var(--txt);}
+.chart-wrap{position:relative;height:190px;}
 
-  /* TOAST */
-  #toast {
-    position: fixed; bottom: 20px; right: 20px;
-    padding: 9px 15px; border-radius: var(--radius);
-    font-size: 12.5px; font-weight: 500;
-    background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
-    opacity: 0; transform: translateY(8px);
-    transition: opacity .25s, transform .25s;
-    pointer-events: none; z-index: 999;
-  }
-  #toast.show { opacity: 1; transform: translateY(0); }
-  #toast.ok  { border-color: var(--green); color: var(--green); }
-  #toast.err { border-color: var(--red);   color: var(--red); }
-
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">⚡</div>
-  <div>
-    <h1>MFM Energy Dashboard</h1>
-    <div class="sub">Real-time metering data</div>
+<aside id="sidebar">
+  <div class="sb-logo">
+    <div class="t1">☀ Solar SCADA</div>
+    <div class="t2">Live Plant Monitor</div>
   </div>
-  <div class="hdr-right">
-    <div id="refresh-info">Auto-refresh: <span id="countdown">5:00</span></div>
-    <div id="status-dot" title="Data status"></div>
+
+  <div class="sb-sec">Navigation</div>
+  <div class="sb-item active" onclick="goDash(this)">📊 Dashboard</div>
+  <div class="sb-item" onclick="goTab(this)">📋 Tabular Data</div>
+
+  <div class="sb-sec">MFM Tabular</div>
+  <div class="sb-sub" id="sl-mfm-day" onclick="openTabular('mfm','day')">📅 Day Data</div>
+  <div class="sb-sub" id="sl-mfm-rep" onclick="openTabular('mfm','report')">📁 Reports</div>
+
+  <div class="sb-sec">Inverter Tabular</div>
+  <div class="sb-sub" id="sl-inv-day" onclick="openTabular('inv','day')">📅 Day Data</div>
+  <div class="sb-sub" id="sl-inv-rep" onclick="openTabular('inv','report')">📁 Reports</div>
+
+  <div class="sb-footer">
+    <span class="dot"></span>Auto-refresh: 5 min<br>
+    <span id="sb-ts" style="font-size:9px;opacity:.7;">—</span>
   </div>
-</header>
+</aside>
 
-<div class="layout">
-  <nav class="sidebar">
-    <div class="sidebar-label">Views</div>
-    <button class="nav-btn active" id="nav-chart" onclick="switchTab('chart')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      MFM Chart
-    </button>
-    <button class="nav-btn" id="nav-table" onclick="switchTab('table')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
-      MFM Table
-    </button>
-    <div class="sidebar-section">
-      <label>Time Interval</label>
-      <select id="intervalSel" onchange="refresh()">
-        <option value="5" selected>5 min</option>
-        <option value="15">15 min</option>
-        <option value="30">30 min</option>
-        <option value="60">60 min</option>
-      </select>
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard Overview</div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="clock">—</div>
+      <button class="ref-btn" onclick="fetchData()">⟳ Refresh</button>
     </div>
-  </nav>
+  </div>
 
-  <div class="main">
-    <div class="stat-strip">
-      <div class="stat-card">
-        <div class="stat-label">MFM Devices</div>
-        <div class="stat-val accent" id="st-devices">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Records</div>
-        <div class="stat-val" id="st-records">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg Frequency</div>
-        <div class="stat-val green" id="st-freq">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg Power (kW)</div>
-        <div class="stat-val amber" id="st-kw">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg PF</div>
-        <div class="stat-val" id="st-pf">—</div>
-      </div>
-    </div>
+  <div id="content">
 
-    <!-- CHART PANEL -->
-    <div class="panel active" id="panel-chart">
-      <div class="chart-toolbar">
-        <span class="lbl">Parameters:</span>
-        <div id="pills-wrap"></div>
-      </div>
-      <div class="chart-area">
-        <div class="empty-state" id="chart-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <div>Data load होत आहे...</div>
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="view active" id="view-dash">
+
+      <div class="status-bar" id="sbar"><span class="spin"></span> डेटा लोड होत आहे...</div>
+
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-ico">⚡</div>
+          <div class="card-lbl">Total Active Power — 4 MFM</div>
+          <div class="card-val" id="c-kw">—</div>
+          <div class="card-unit">kW (Positive)</div>
         </div>
-        <canvas id="mfmChart" style="display:none;"></canvas>
+        <div class="card blue">
+          <div class="card-ico">🔋</div>
+          <div class="card-lbl">Total Export Energy — 4 MFM</div>
+          <div class="card-val" id="c-kwh">—</div>
+          <div class="card-unit">kWh (ekwh)</div>
+        </div>
+        <div class="card green">
+          <div class="card-ico">📈</div>
+          <div class="card-lbl">Performance Ratio (PR)</div>
+          <div class="card-val" id="c-pr">—</div>
+          <div class="card-unit">% — लवकरच</div>
+        </div>
+        <div class="card purple">
+          <div class="card-ico">☀</div>
+          <div class="card-lbl">Irradiation</div>
+          <div class="card-val" id="c-irr">—</div>
+          <div class="card-unit">kWh/m² — लवकरच</div>
+        </div>
       </div>
+
+      <div class="tab-row">
+        <button class="tab-btn active" id="dtab-mfm" onclick="switchDash('mfm')">⚡ MFM Data</button>
+        <button class="tab-btn" id="dtab-inv" onclick="switchDash('inv')">🔌 Inverter Data</button>
+      </div>
+
+      <!-- MFM live table -->
+      <div class="dc" id="dp-mfm">
+        <div class="dc-hdr">MFM — <span>4 Meters Live</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Device</th><th>Vr (V)</th><th>Vy (V)</th><th>Vb (V)</th>
+              <th>Ir (A)</th><th>Iy (A)</th><th>Ib (A)</th>
+              <th>kW</th><th>kVAR</th><th>kVA</th><th>PF</th><th>Freq</th>
+              <th>Import kWh</th><th>Export kWh</th><th>Status</th>
+            </tr></thead>
+            <tbody id="mfm-live-body"><tr><td colspan="15" class="pm">लोड होत आहे...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Inverter live table -->
+      <div class="dc" id="dp-inv" style="display:none">
+        <div class="dc-hdr">Inverters — <span>All Live</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Device</th>
+              <th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th><th>DC kWh</th>
+              <th>Total kWh</th><th>Temp (°C)</th>
+              <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th>
+              <th>Status</th>
+            </tr></thead>
+            <tbody id="inv-live-body"><tr><td colspan="13" class="pm">लोड होत आहे...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bar chart -->
+      <div class="chart-card">
+        <div class="chart-title">All Inverters — <b>DC Input Power (Win kW)</b></div>
+        <div class="chart-wrap"><canvas id="invChart"></canvas></div>
+      </div>
+
     </div>
 
-    <!-- TABLE PANEL -->
-    <div class="panel" id="panel-table">
-      <div class="table-toolbar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--muted)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="tableSearch" placeholder="Search..." oninput="renderTable()" />
-        <span style="font-size:11px;color:var(--muted);margin-left:auto;" id="row-count"></span>
+    <!-- ═══ TABULAR ═══ -->
+    <div class="view" id="view-tab">
+
+      <div class="itab-row">
+        <button class="itab active" id="tt-mfm" onclick="switchTabMain('mfm')">⚡ MFM</button>
+        <button class="itab" id="tt-inv" onclick="switchTabMain('inv')">🔌 Inverter</button>
       </div>
-      <div class="table-area">
-        <div class="empty-state" id="table-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
-          <div>Data load होत आहे...</div>
+
+      <!-- MFM tabular -->
+      <div id="tp-mfm">
+        <div class="itab-row">
+          <button class="itab active" id="tm-day" onclick="switchTabSub('mfm','day')">📅 Day Data</button>
+          <button class="itab" id="tm-rep" onclick="switchTabSub('mfm','report')">📁 Reports</button>
         </div>
-        <table id="mfmTable" style="display:none;">
-          <thead id="tHead"></thead>
-          <tbody id="tBody"></tbody>
-        </table>
+        <div id="tp-mfm-day">
+          <div class="dc">
+            <div class="dc-hdr">MFM — <span>Day Data (5-min intervals)</span></div>
+            <div class="tw" style="max-height:450px">
+              <table>
+                <thead><tr>
+                  <th>Time</th><th>Device</th>
+                  <th>Vr</th><th>Vy</th><th>Vb</th>
+                  <th>Ir</th><th>Iy</th><th>Ib</th>
+                  <th>kW</th><th>kVAR</th><th>kVA</th><th>PF</th><th>Freq</th>
+                  <th>ikwh</th><th>ekwh</th><th>Status</th>
+                </tr></thead>
+                <tbody id="mfm-day-body"><tr><td colspan="16" class="pm">डेटा येत आहे — refresh होताच दिसेल</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="tp-mfm-rep" style="display:none">
+          <div class="dc"><div class="pm" style="padding:50px">📁 MFM Reports URL नंतर update केले जाईल.</div></div>
+        </div>
       </div>
+
+      <!-- Inverter tabular -->
+      <div id="tp-inv" style="display:none">
+        <div class="itab-row">
+          <button class="itab active" id="ti-day" onclick="switchTabSub('inv','day')">📅 Day Data</button>
+          <button class="itab" id="ti-rep" onclick="switchTabSub('inv','report')">📁 Reports</button>
+        </div>
+        <div id="tp-inv-day">
+          <div class="dc">
+            <div class="dc-hdr">Inverter — <span>Day Data (5-min intervals)</span></div>
+            <div class="tw" style="max-height:450px">
+              <table>
+                <thead><tr>
+                  <th>Time</th><th>Device</th>
+                  <th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th>
+                  <th>DC kWh</th><th>Total kWh</th><th>Temp</th>
+                  <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th>
+                  <th>Status</th>
+                </tr></thead>
+                <tbody id="inv-day-body"><tr><td colspan="14" class="pm">डेटा येत आहे — refresh होताच दिसेल</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="tp-inv-rep" style="display:none">
+          <div class="dc"><div class="pm" style="padding:50px">📁 Inverter Reports URL नंतर update केले जाईल.</div></div>
+        </div>
+      </div>
+
     </div>
+
   </div>
 </div>
 
-<div id="toast"></div>
-
 <script>
-// ══ HARDCODED URL — बदलू नका ══
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwasCmlP5Hh6fciUDW-kL5MuLcGaj3wNRypHlNSUPIDn-wBJF4EiQ_zIhIN9MI6b6trkA/exec';
+// ── CONFIG ──
+const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSZOBtMJNZc3UXC8A1tFiv2gHr8mv_SNDFFjfN1bILLpIeL70JyECYRIEJ8yErMvjXO7rKAw4OfxdcMjritYp8_VMs3P_nESIHZ89AY4GYXW-L8zJ-e4Dzp-mD38ukB1DMl3Ew2U5lOI_tW6YRaStwiLV3n2zBziGBwXiM3KvoLr0geEIi2t5tfValxSwB7WwuPsEkg8E7JuwT1PSiga6Yinpmn3fOy8ogiEK03ng0igem7Vv9p-05X7-N5jF2Vr4w3CbizdWfOwP4zmjc9eXubRJu9-Q&lib=MJ5HZeqMKRWvhcsmOGO96nZHe6fVZ7h-Z";
+const REFRESH = 5*60*1000;
 
-const REFRESH_SEC = 30; // 5 minutes
+// Column index map (0-based) from header:
+// Timestamp,companyname,sitename,DeviceName,DeviceType,
+// vr,vy,vb,ir,iy,ib,wr,wy,wb,f,pf,ikwh,ekwh,
+// v,i,w,va,var,wh,vah,varh,Status,
+// vin,iin,win,dkwh,tkwh,temp,
+// mv1,mv2,mv3,mv4,mv5,mv6,mv7,mv8,mv9,mv10,mv11,mv12,
+// s1..s32
+const C = {
+  ts:0, company:1, site:2, name:3, type:4,
+  vr:5,vy:6,vb:7,ir:8,iy:9,ib:10,
+  wr:11,wy:12,wb:13,f:14,pf:15,ikwh:16,ekwh:17,
+  v:18,i:19,w:20,va:21,varC:22,wh:23,vah:24,varh:25,status:26,
+  vin:27,iin:28,win:29,dkwh:30,tkwh:31,temp:32,
+  mv1:33,mv2:34,mv3:35,mv4:36,mv5:37
+};
 
-const MFM_PARAMS   = ['vr','vy','vb','ir','iy','ib','wr','wy','wb','f','pf','ikwh','ekwh','v','i','w','va','var','wh','vah','varh'];
-const DEFAULT_ON   = new Set(['w','f','pf','v','i']);
-const activeParams = new Set(DEFAULT_ON);
-const LINE_COLORS  = ['#3b82f6','#f59e0b','#22c55e','#ef4444','#a78bfa','#fb923c','#38bdf8','#f472b6','#34d399','#facc15'];
+let chart = null;
+let mfmHistory = [], invHistory = [];
 
-let allRows = [], mfmRows = [], myChart = null;
-let sortCol = null, sortDir = 1;
-let countdown = REFRESH_SEC;
-
-// ══ INIT ══
+// ── INIT ──
 window.addEventListener('DOMContentLoaded', () => {
-  buildPills();
-  loadData();
-  startCountdown();
+  setInterval(() => {
+    document.getElementById('clock').textContent =
+      new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'});
+  }, 1000);
+  initChart();
+  fetchData();
+  setInterval(fetchData, REFRESH);
 });
 
-// ══ AUTO REFRESH COUNTDOWN ══
-function startCountdown() {
-  countdown = REFRESH_SEC;
-  setInterval(() => {
-    countdown--;
-    if (countdown <= 0) {
-      countdown = REFRESH_SEC;
-      loadData();
-    }
-    const m = String(Math.floor(countdown / 60)).padStart(1,'0');
-    const s = String(countdown % 60).padStart(2,'0');
-    document.getElementById('countdown').textContent = m + ':' + s;
-  }, 1000);
-}
-
-// ══ LOAD DATA ══
-async function loadData() {
-  setDot('loading');
-  try {
-    const resp = await fetch(SCRIPT_URL);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const text = await resp.text();
-    parseCSV(text);
-    setDot('ok');
-    showToast('Data updated ✓', 'ok');
-  } catch(e) {
-    setDot('err');
-    showToast('Fetch error: ' + e.message, 'err');
-  }
-}
-
-// ══ PARSE CSV ══
-function parseCSV(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  if (!lines.length) return;
-  const header = lines[0].split(',').map(h => h.trim());
+// ── PARSE CSV ──
+function parseCSV(raw) {
+  // Split by lines, group into record blocks (each record may span multiple lines)
+  // Pattern: date line then data line(s)
+  // Actually from screenshot: each record is: timestamp line \n data line
+  // But more robustly: split all lines, skip date-only lines (dd-mm-yyyy), parse data lines
+  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
   const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (/^\d{2}-\d{2}-\d{4}$/.test(lines[i])) continue;
-    const vals = lines[i].split(',');
-    const obj = {};
-    header.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
-    rows.push(obj);
+  let headers = null;
+
+  for(let i=0;i<lines.length;i++){
+    const l = lines[i];
+    // Header line
+    if(!headers && l.startsWith('Timestamp')){
+      headers = smartSplit(l);
+      continue;
+    }
+    // Date-only line like "12-06-2026" — skip
+    if(/^\d{2}-\d{2}-\d{4}$/.test(l)) continue;
+    // Data line
+    if(headers && l.length > 10 && !l.startsWith('Timestamp')){
+      const cols = smartSplit(l);
+      if(cols.length >= 5){
+        rows.push(cols);
+      }
+    }
   }
-  allRows  = rows;
-  mfmRows  = rows.filter(r => (r.DeviceType || '').toUpperCase() === 'MFM');
-  updateStats();
-  refresh();
+  return {headers, rows};
 }
 
-// ══ STATS ══
-function updateStats() {
-  const devices = new Set(mfmRows.map(r => r.DeviceName)).size;
-  document.getElementById('st-devices').textContent = devices || '—';
-  document.getElementById('st-records').textContent = mfmRows.length || '—';
-  document.getElementById('st-freq').textContent = mfmRows.length ? avgField(mfmRows,'f').toFixed(2)+' Hz' : '—';
-  document.getElementById('st-kw').textContent   = mfmRows.length ? avgField(mfmRows,'w').toFixed(2) : '—';
-  document.getElementById('st-pf').textContent   = mfmRows.length ? avgField(mfmRows,'pf').toFixed(3) : '—';
+function smartSplit(line){
+  // Split by comma but handle potential quoted fields
+  return line.split(',');
 }
 
-function avgField(rows, key) {
-  const vals = rows.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
-  return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : 0;
+// ── FETCH ──
+async function fetchData(){
+  setStatus('loading','डेटा लोड होत आहे...');
+  try{
+    const r = await fetch(DATA_URL + '&_nc=' + Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const text = await r.text();
+    processCSV(text);
+    const ts = new Date().toLocaleTimeString('en-IN');
+    setStatus('ok','✅ Updated: '+ts);
+    document.getElementById('sb-ts').textContent = 'Last: '+ts;
+  }catch(e){
+    setStatus('err','❌ '+e.message+' — Check CORS settings in Apps Script (doGet must allow all)');
+  }
 }
 
-// ══ TAB ══
-function switchTab(tab) {
-  ['chart','table'].forEach(t => {
-    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
-    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+function processCSV(raw){
+  const {rows} = parseCSV(raw);
+  const mfmRows = rows.filter(r => (r[C.type]||'').trim().toUpperCase()==='MFM');
+  const invRows = rows.filter(r => (r[C.type]||'').trim().toUpperCase()==='INVERTER');
+
+  // ── Cards ──
+  let totalKW=0, totalEkwh=0;
+  mfmRows.forEach(r=>{
+    const kw = parseFloat(r[C.w]||0);
+    const kwh = parseFloat(r[C.ekwh]||0);
+    if(kw>0) totalKW+=kw;
+    if(kwh>0) totalEkwh+=kwh;
   });
+  // Convert W to kW if values look like W (>1000 for plausible kW reading)
+  const kwDisp = totalKW > 10000 ? (totalKW/1000).toFixed(2) : totalKW.toFixed(2);
+  const kwhDisp = totalEkwh > 1000000 ? (totalEkwh/1000).toFixed(2) : totalEkwh.toFixed(2);
+  document.getElementById('c-kw').textContent = kwDisp || '—';
+  document.getElementById('c-kwh').textContent = kwhDisp || '—';
+
+  // ── Timestamp display ──
+  const lastTs = rows.length ? (rows[rows.length-1][C.ts]||'') : '';
+  document.getElementById('mfm-ts').textContent = lastTs ? ' — '+lastTs : '';
+  document.getElementById('inv-ts').textContent = lastTs ? ' — '+lastTs : '';
+
+  // ── MFM Live Table ──
+  const mb = document.getElementById('mfm-live-body');
+  if(mfmRows.length){
+    mb.innerHTML = mfmRows.map(r=>{
+      const kw = parseFloat(r[C.w]||0);
+      const kwDisp = kw>1000?(kw/1000).toFixed(3):kw.toFixed(3);
+      const va = parseFloat(r[C.va]||0);
+      const vaDisp = va>1000?(va/1000).toFixed(3):va.toFixed(3);
+      const varV = parseFloat(r[C.varC]||0);
+      const varDisp = varV>1000?(varV/1000).toFixed(3):varV.toFixed(3);
+      const ekwh = parseFloat(r[C.ekwh]||0);
+      const ekwhDisp = ekwh>1000000?(ekwh/1000000).toFixed(3):ekwh>1000?(ekwh/1000).toFixed(3):ekwh.toFixed(3);
+      const ikwh = parseFloat(r[C.ikwh]||0);
+      const ikwhDisp = ikwh>1000000?(ikwh/1000000).toFixed(3):ikwh>1000?(ikwh/1000).toFixed(3):ikwh.toFixed(3);
+      return `<tr>
+        <td>${r[C.name]||'—'}</td>
+        <td>${n(r[C.vr])}</td><td>${n(r[C.vy])}</td><td>${n(r[C.vb])}</td>
+        <td>${n(r[C.ir])}</td><td>${n(r[C.iy])}</td><td>${n(r[C.ib])}</td>
+        <td class="${kw>0?'pos':kw<0?'neg':''}">${kwDisp}</td>
+        <td>${varDisp}</td><td>${vaDisp}</td>
+        <td>${n(r[C.pf])}</td><td>${n(r[C.f])}</td>
+        <td>${ikwhDisp}</td><td>${ekwhDisp}</td>
+        <td>${r[C.status]||'—'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    mb.innerHTML='<tr><td colspan="15" class="pm">MFM डेटा नाही</td></tr>';
+  }
+
+  // ── Inverter Live Table ──
+  const ib = document.getElementById('inv-live-body');
+  if(invRows.length){
+    ib.innerHTML = invRows.map(r=>{
+      const win = parseFloat(r[C.win]||0);
+      return `<tr>
+        <td>${r[C.name]||'—'}</td>
+        <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td>
+        <td class="${win>0?'pos':''}">${n(r[C.win])}</td>
+        <td>${n(r[C.dkwh])}</td><td>${n(r[C.tkwh])}</td>
+        <td>${n(r[C.temp])}</td>
+        <td>${n(r[C.mv1])}</td><td>${n(r[C.mv2])}</td>
+        <td>${n(r[C.mv3])}</td><td>${n(r[C.mv4])}</td><td>${n(r[C.mv5])}</td>
+        <td>${r[C.status]||'—'}</td>
+      </tr>`;
+    }).join('');
+    updateChart(invRows);
+  } else {
+    ib.innerHTML='<tr><td colspan="13" class="pm">Inverter डेटा नाही</td></tr>';
+  }
+
+  // ── Day History ──
+  if(mfmRows.length) mfmHistory.push({ts: new Date().toLocaleTimeString('en-IN'), rows: mfmRows});
+  if(invRows.length) invHistory.push({ts: new Date().toLocaleTimeString('en-IN'), rows: invRows});
+  renderHistory();
 }
 
-function refresh() { renderChart(); renderTable(); }
-
-// ══ CHART ══
-function buildPills() {
-  const wrap = document.getElementById('pills-wrap');
-  wrap.innerHTML = '';
-  MFM_PARAMS.forEach(p => {
-    const el = document.createElement('span');
-    el.className = 'pill' + (activeParams.has(p) ? ' on' : '');
-    el.textContent = p.toUpperCase();
-    el.onclick = () => {
-      if (activeParams.has(p)) { if (activeParams.size > 1) activeParams.delete(p); }
-      else activeParams.add(p);
-      el.classList.toggle('on', activeParams.has(p));
-      renderChart();
-    };
-    wrap.appendChild(el);
-  });
+function n(v){
+  if(v===null||v===undefined||v==='') return '—';
+  const f=parseFloat(v);
+  return isNaN(f)?v:f.toFixed(2);
 }
 
-function renderChart() {
-  if (!mfmRows.length) { showChartEmpty(true); return; }
-  showChartEmpty(false);
-  const intervalMin = parseInt(document.getElementById('intervalSel').value);
-  const buckets = bucketRows(mfmRows, intervalMin);
-  const labels  = Object.keys(buckets).sort();
-  const datasets = [];
-  let ci = 0;
-  activeParams.forEach(param => {
-    datasets.push({
-      label: param.toUpperCase(),
-      data: labels.map(l => parseFloat(avgField(buckets[l], param).toFixed(4))),
-      borderColor: LINE_COLORS[ci % LINE_COLORS.length],
-      backgroundColor: LINE_COLORS[ci % LINE_COLORS.length] + '22',
-      borderWidth: 2,
-      pointRadius: labels.length > 60 ? 0 : 3,
-      pointHoverRadius: 5,
-      tension: 0.35,
-      spanGaps: true
-    });
-    ci++;
-  });
-  if (myChart) { myChart.destroy(); }
-  myChart = new Chart(document.getElementById('mfmChart').getContext('2d'), {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      animation: { duration: 300 },
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: true, position: 'top', labels: { color:'#7a8099', font:{size:11}, boxWidth:12, padding:12, usePointStyle:true } },
-        tooltip: { backgroundColor:'#1e2333', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, titleColor:'#e8eaf0', bodyColor:'#9ba3bf', padding:10 }
-      },
-      scales: {
-        x: { ticks:{color:'#7a8099',font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:16}, grid:{color:'rgba(255,255,255,0.04)'} },
-        y: { ticks:{color:'#7a8099',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'} }
+// ── HISTORY TABLES ──
+function renderHistory(){
+  // MFM Day
+  const md = document.getElementById('mfm-day-body');
+  if(mfmHistory.length){
+    md.innerHTML=[...mfmHistory].reverse().flatMap(e=>
+      e.rows.map(r=>`<tr>
+        <td>${e.ts}</td><td>${r[C.name]||'—'}</td>
+        <td>${n(r[C.vr])}</td><td>${n(r[C.vy])}</td><td>${n(r[C.vb])}</td>
+        <td>${n(r[C.ir])}</td><td>${n(r[C.iy])}</td><td>${n(r[C.ib])}</td>
+        <td>${n(r[C.w])}</td><td>${n(r[C.varC])}</td><td>${n(r[C.va])}</td>
+        <td>${n(r[C.pf])}</td><td>${n(r[C.f])}</td>
+        <td>${n(r[C.ikwh])}</td><td>${n(r[C.ekwh])}</td>
+        <td>${r[C.status]||'—'}</td>
+      </tr>`)
+    ).join('');
+  }
+  // Inv Day
+  const id = document.getElementById('inv-day-body');
+  if(invHistory.length){
+    id.innerHTML=[...invHistory].reverse().flatMap(e=>
+      e.rows.map(r=>`<tr>
+        <td>${e.ts}</td><td>${r[C.name]||'—'}</td>
+        <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td><td>${n(r[C.win])}</td>
+        <td>${n(r[C.dkwh])}</td><td>${n(r[C.tkwh])}</td><td>${n(r[C.temp])}</td>
+        <td>${n(r[C.mv1])}</td><td>${n(r[C.mv2])}</td>
+        <td>${n(r[C.mv3])}</td><td>${n(r[C.mv4])}</td><td>${n(r[C.mv5])}</td>
+        <td>${r[C.status]||'—'}</td>
+      </tr>`)
+    ).join('');
+  }
+}
+
+// ── CHART ──
+function initChart(){
+  const ctx=document.getElementById('invChart').getContext('2d');
+  chart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:[],datasets:[{
+      label:'Win (kW)',data:[],
+      backgroundColor:'rgba(246,201,14,0.75)',
+      borderColor:'rgba(246,201,14,1)',
+      borderWidth:1,borderRadius:4
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:9}},grid:{color:'rgba(45,55,72,.4)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:9}},grid:{color:'rgba(45,55,72,.4)'},beginAtZero:true,
+           title:{display:true,text:'kW',color:'#94a3b8',font:{size:10}}}
       }
     }
   });
 }
 
-function showChartEmpty(v) {
-  document.getElementById('chart-empty').style.display = v ? 'flex' : 'none';
-  document.getElementById('mfmChart').style.display    = v ? 'none' : 'block';
+function updateChart(rows){
+  if(!chart) return;
+  chart.data.labels = rows.map(r=>r[C.name]||'?');
+  chart.data.datasets[0].data = rows.map(r=>parseFloat(r[C.win]||0));
+  chart.update();
 }
 
-// ══ TABLE ══
-function renderTable() {
-  if (!mfmRows.length) { showTableEmpty(true); return; }
-  showTableEmpty(false);
-  const intervalMin = parseInt(document.getElementById('intervalSel').value);
-  const buckets  = bucketRows(mfmRows, intervalMin);
-  const search   = (document.getElementById('tableSearch').value || '').toLowerCase();
-  const allCols  = ['time','count',...MFM_PARAMS];
-  let tableData  = Object.keys(buckets).sort().map(l => {
-    const obj = { time: l, count: buckets[l].length };
-    MFM_PARAMS.forEach(p => { const v = avgField(buckets[l], p); obj[p] = isNaN(v) ? null : v; });
-    return obj;
-  });
-  if (search) tableData = tableData.filter(row => allCols.some(c => String(row[c]??'').toLowerCase().includes(search)));
-  if (sortCol) tableData.sort((a,b) => {
-    const av = a[sortCol]??-Infinity, bv = b[sortCol]??-Infinity;
-    return (av<bv?-1:av>bv?1:0)*sortDir;
-  });
-  document.getElementById('row-count').textContent = tableData.length + ' rows';
-  document.getElementById('tHead').innerHTML = '<tr>' + allCols.map(c => {
-    const arrow = sortCol===c ? (sortDir===1?' ▲':' ▼') : '';
-    return `<th onclick="sortTable('${c}')">${c.toUpperCase()}${arrow}</th>`;
-  }).join('') + '</tr>';
-  document.getElementById('tBody').innerHTML = tableData.map(row =>
-    '<tr>' + allCols.map(c => {
-      if (c==='time')  return `<td class="time-col">${row.time}</td>`;
-      if (c==='count') return `<td><span class="badge badge-ok">${row.count}</span></td>`;
-      const v = row[c];
-      if (v===null) return `<td class="num" style="color:var(--muted)">—</td>`;
-      return `<td class="num ${v<0?'neg':''}">${v.toFixed(3)}</td>`;
-    }).join('') + '</tr>'
-  ).join('');
+// ── STATUS ──
+function setStatus(type,msg){
+  const el=document.getElementById('sbar');
+  el.className='status-bar'+(type==='err'?' err':type==='ok'?' ok':'');
+  el.innerHTML=(type==='loading'?'<span class="spin"></span>':'')+msg;
 }
 
-function sortTable(col) {
-  sortDir = sortCol===col ? -sortDir : 1;
-  sortCol = col;
-  renderTable();
+// ── NAV ──
+function goDash(el){
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-title').textContent='Dashboard Overview';
+  showView('dash');
 }
-
-function showTableEmpty(v) {
-  document.getElementById('table-empty').style.display = v ? 'flex'  : 'none';
-  document.getElementById('mfmTable').style.display    = v ? 'none'  : 'table';
+function goTab(el){
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-title').textContent='Tabular Data';
+  showView('tab');
 }
-
-// ══ UTILS ══
-function bucketRows(rows, intervalMin) {
-  const buckets = {};
-  rows.forEach(r => {
-    const ts = (r.Timestamp||r.timestamp||'').trim();
-    if (!ts) return;
-    const [h,m] = ts.split(':').map(Number);
-    if (isNaN(h)||isNaN(m)) return;
-    const slot = Math.floor((h*60+m)/intervalMin)*intervalMin;
-    const key  = String(Math.floor(slot/60)).padStart(2,'0')+':'+String(slot%60).padStart(2,'0');
-    if (!buckets[key]) buckets[key] = [];
-    buckets[key].push(r);
-  });
-  return buckets;
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
 }
-
-function setDot(s) { document.getElementById('status-dot').className = s||''; }
-
-let toastT;
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'show '+(type||'');
-  clearTimeout(toastT);
-  toastT = setTimeout(() => { t.className=''; }, 2800);
+function openTabular(type,sub){
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.sb-sub').forEach(e=>e.classList.remove('active'));
+  document.getElementById('sl-'+type+'-'+(sub==='day'?'day':'rep')).classList.add('active');
+  document.getElementById('page-title').textContent='Tabular Data';
+  showView('tab');
+  switchTabMain(type);
+  switchTabSub(type,sub);
+}
+function switchDash(t){
+  document.getElementById('dtab-mfm').classList.toggle('active',t==='mfm');
+  document.getElementById('dtab-inv').classList.toggle('active',t==='inv');
+  document.getElementById('dp-mfm').style.display=t==='mfm'?'':'none';
+  document.getElementById('dp-inv').style.display=t==='inv'?'':'none';
+}
+function switchTabMain(t){
+  document.getElementById('tt-mfm').classList.toggle('active',t==='mfm');
+  document.getElementById('tt-inv').classList.toggle('active',t==='inv');
+  document.getElementById('tp-mfm').style.display=t==='mfm'?'':'none';
+  document.getElementById('tp-inv').style.display=t==='inv'?'':'none';
+}
+function switchTabSub(type,sub){
+  if(type==='mfm'){
+    document.getElementById('tm-day').classList.toggle('active',sub==='day');
+    document.getElementById('tm-rep').classList.toggle('active',sub==='report');
+    document.getElementById('tp-mfm-day').style.display=sub==='day'?'':'none';
+    document.getElementById('tp-mfm-rep').style.display=sub==='report'?'':'none';
+  } else {
+    document.getElementById('ti-day').classList.toggle('active',sub==='day');
+    document.getElementById('ti-rep').classList.toggle('active',sub==='report');
+    document.getElementById('tp-inv-day').style.display=sub==='day'?'':'none';
+    document.getElementById('tp-inv-rep').style.display=sub==='report'?'':'none';
+  }
 }
 </script>
 </body>
