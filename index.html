@@ -111,13 +111,13 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
 <aside id="sidebar">
   <div class="sb-logo">
-    <div class="t1">☀ Solar SCADA</div>
+    <div class="t1">☀ Bhageria Green Energy Solutions Private limited</div>
     <div class="t2">Live Plant Monitor</div>
   </div>
-  <div class="sb-sec">Navigation</div>
+  <div class="sb-sec">Data fields</div>
   <div class="sb-item active" id="nav-dash" onclick="goDash()">📊 Dashboard</div>
-  <div class="sb-item" id="nav-tab" onclick="goTab()">📋 Tabular Data</div>
-  <div class="sb-sec">MFM Tabular</div>
+  <div class="sb-item" id="nav-tab" onclick="goTab()">📋 Tabular Data view</div>
+  <div class="sb-sec">MFM data</div>
   <div class="sb-sub" id="sl-mfm-day" onclick="openTabular('mfm','day')">📅 Day Data</div>
   <div class="sb-sub" id="sl-mfm-rep" onclick="openTabular('mfm','report')">📁 Reports</div>
   <div class="sb-sec">Inverter Tabular</div>
@@ -142,14 +142,14 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
     <!-- ═══ DASHBOARD ═══ -->
     <div class="view active" id="view-dash">
-      <div class="sbar" id="sbar"><span class="spin"></span> डेटा लोड होत आहे...</div>
+      <div class="sbar" id="sbar"><span class="spin"></span> Loading...</div>
 
       <div class="cards-row">
         <div class="card">
           <div class="card-ico">⚡</div>
-          <div class="card-lbl">Total Active Power — 4 MFM</div>
+          <div class="card-lbl">Plant Power</div>
           <div class="card-val" id="c-kw">—</div>
-          <div class="card-unit">kW (Positive)</div>
+          <div class="card-unit">kW</div>
         </div>
         <div class="card blue">
           <div class="card-ico">🔋</div>
@@ -161,13 +161,13 @@ tr:hover td{background:rgba(246,201,14,.03);}
           <div class="card-ico">📈</div>
           <div class="card-lbl">Performance Ratio (PR)</div>
           <div class="card-val" id="c-pr">—</div>
-          <div class="card-unit">% — लवकरच</div>
+          <div class="card-unit">%</div>
         </div>
         <div class="card purple">
           <div class="card-ico">☀</div>
           <div class="card-lbl">Irradiation</div>
           <div class="card-val" id="c-irr">—</div>
-          <div class="card-unit">kWh/m² — लवकरच</div>
+          <div class="card-unit">kWh/m²</div>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
       <!-- MFM live -->
       <div class="dc" id="dp-mfm">
-        <div class="dc-hdr">MFM — <span>Latest Live Reading</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div class="dc-hdr">MFM — <span>Live Reading</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
           <table>
             <thead><tr>
@@ -187,29 +187,29 @@ tr:hover td{background:rgba(246,201,14,.03);}
               <th>kW</th><th>kVAR</th><th>kVA</th>
               <th>PF</th><th>Freq</th><th>ikWh</th><th>ekWh</th><th>Status</th>
             </tr></thead>
-            <tbody id="mfm-live-body"><tr><td colspan="15" class="pm">लोड होत आहे...</td></tr></tbody>
+            <tbody id="mfm-live-body"><tr><td colspan="15" class="pm">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <!-- Inverter live -->
       <div class="dc" id="dp-inv" style="display:none">
-        <div class="dc-hdr">Inverters — <span>Latest Live Reading</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div class="dc-hdr">Inverters — <span>Live Reading</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
           <table>
             <thead><tr>
               <th>Device</th><th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th>
-              <th>DC kWh</th><th>Total kWh</th><th>Temp (°C)</th>
-              <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>Status</th>
+              <th>Day Gen</th><th>Total Gen</th><th>Temp (°C)</th>
+              <th>MPPT1th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>Status</th>
             </tr></thead>
-            <tbody id="inv-live-body"><tr><td colspan="13" class="pm">लोड होत आहे...</td></tr></tbody>
+            <tbody id="inv-live-body"><tr><td colspan="13" class="pm">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <!-- Bar chart -->
       <div class="chart-card">
-        <div class="chart-title">All Inverters — <b>DC Input Power (Win kW)</b></div>
+        <div class="chart-title">Inverters — <b>AC Power (KW)</b></div>
         <div class="chart-wrap"><canvas id="invChart"></canvas></div>
       </div>
     </div>
@@ -352,7 +352,7 @@ function normDate(raw) {
 
 // ── FETCH ──
 async function fetchData() {
-  setStatus('loading','डेटा लोड होत आहे...');
+  setStatus('loading','...');
   try {
     const r = await fetch(DATA_URL + '&_nc='+Date.now());
     if(!r.ok) throw new Error('HTTP '+r.status);
@@ -565,10 +565,11 @@ function initChart(){
       }}
   });
 }
+// inverter chart w per bar
 function updateChart(rows){
   if(!chart) return;
   chart.data.labels = rows.map(r=>r[C.name]||'?');
-  chart.data.datasets[0].data = rows.map(r=>parseFloat(r[C.win]||0));
+  chart.data.datasets[0].data = rows.map(r=>parseFloat(r[C.w]||0));
   chart.update();
 }
 
