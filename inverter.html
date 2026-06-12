@@ -1,118 +1,527 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mr">
 <head>
-    <meta charset="UTF-8">
-    <title>Inverter Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MFM Energy Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:       #0f1117;
+    --surface:  #181c27;
+    --surface2: #1e2333;
+    --border:   rgba(255,255,255,0.08);
+    --border2:  rgba(255,255,255,0.14);
+    --text:     #e8eaf0;
+    --muted:    #7a8099;
+    --accent:   #3b82f6;
+    --accent2:  #60a5fa;
+    --green:    #22c55e;
+    --amber:    #f59e0b;
+    --red:      #ef4444;
+    --radius:   10px;
+    --radius-sm:6px;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px; line-height: 1.5;
+    display: flex; flex-direction: column;
+  }
 
-    <!-- CHART.JS (optional for later) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  /* HEADER */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .logo {
+    width: 32px; height: 32px; background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff;
+  }
+  header h1 { font-size: 15px; font-weight: 600; }
+  header .sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  #refresh-info { font-size: 11px; color: var(--muted); }
+  #refresh-info span { color: var(--accent2); font-weight: 600; }
+  #status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .3s, box-shadow .3s;
+  }
+  #status-dot.ok      { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  #status-dot.err     { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  #status-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-            padding: 10px;
-        }
+  /* LAYOUT */
+  .layout { display: flex; flex: 1; overflow: hidden; }
 
-        .title {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            background: white;
-            padding: 8px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
+  /* SIDEBAR */
+  .sidebar {
+    width: 165px; flex-shrink: 0;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 14px 0;
+  }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 0 16px 8px;
+  }
+  .nav-btn {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 16px; font-size: 13px; font-weight: 500;
+    color: var(--muted); background: none; border: none;
+    width: 100%; text-align: left; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: color .15s, background .15s;
+  }
+  .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(59,130,246,.08); }
+  .sidebar-section { margin-top: 18px; padding: 0 12px; }
+  .sidebar-section label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .sidebar-section select {
+    width: 100%; padding: 6px 8px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 12px;
+    cursor: pointer; outline: none;
+  }
 
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+  /* MAIN */
+  .main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
-        button {
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            border-radius: 5px;
-            border: none;
-        }
+  /* STAT STRIP */
+  .stat-strip {
+    display: flex; gap: 10px; padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .stat-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 13px; min-width: 105px;
+  }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat-val   { font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .stat-val.accent { color: var(--accent2); }
+  .stat-val.green  { color: var(--green); }
+  .stat-val.amber  { color: var(--amber); }
 
-        .back-btn {
-            background: #3498db;
-            color: white;
-        }
+  /* PANELS */
+  .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .panel.active { display: flex; }
 
-        .logout-btn {
-            background: #e74c3c;
-            color: white;
-        }
+  /* CHART PANEL */
+  .chart-toolbar {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    padding: 9px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .chart-toolbar .lbl { font-size: 11px; color: var(--muted); margin-right: 2px; }
+  .pill {
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border2); cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .pill:hover { color: var(--text); }
+  .pill.on { background: rgba(59,130,246,.18); color: var(--accent2); border-color: var(--accent); }
+  .chart-area { flex: 1; padding: 14px 16px; position: relative; }
+  #mfmChart { width: 100% !important; height: 100% !important; }
 
-        .filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
+  /* TABLE PANEL */
+  .table-toolbar {
+    padding: 9px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .table-toolbar input {
+    padding: 6px 10px; background: var(--bg); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 12.5px;
+    width: 200px; outline: none;
+  }
+  .table-toolbar input:focus { border-color: var(--accent); }
+  .table-area { flex: 1; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--surface); padding: 8px 10px;
+    text-align: left; font-size: 10.5px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+    border-bottom: 1px solid var(--border2); white-space: nowrap;
+    cursor: pointer; user-select: none;
+  }
+  thead th:hover { color: var(--text); }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:hover td { background: rgba(255,255,255,.03); }
+  tbody td { padding: 7px 10px; color: var(--text); white-space: nowrap; }
+  tbody td.time-col { font-weight: 600; color: var(--accent2); }
+  tbody td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  tbody td.neg { color: var(--red); }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+  .badge-ok { background: rgba(34,197,94,.15); color: #4ade80; }
 
-        .dropdown {
-            position: relative;
-        }
+  /* EMPTY */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px; flex: 1;
+    color: var(--muted); font-size: 13px;
+  }
+  .empty-state svg { width: 44px; height: 44px; opacity: .3; }
 
-        .dropdown button {
-            background: white;
-            border: 1px solid #999;
-        }
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 20px; right: 20px;
+    padding: 9px 15px; border-radius: var(--radius);
+    font-size: 12.5px; font-weight: 500;
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .25s, transform .25s;
+    pointer-events: none; z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.ok  { border-color: var(--green); color: var(--green); }
+  #toast.err { border-color: var(--red);   color: var(--red); }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            padding: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 10;
-        }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
 
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
+<header>
+  <div class="logo">⚡</div>
+  <div>
+    <h1>MFM Energy Dashboard</h1>
+    <div class="sub">Real-time metering data</div>
+  </div>
+  <div class="hdr-right">
+    <div id="refresh-info">Auto-refresh: <span id="countdown">5:00</span></div>
+    <div id="status-dot" title="Data status"></div>
+  </div>
+</header>
 
-        .dropdown-content label {
-            display: block;
-            font-size: 12px;
-        }
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-label">Views</div>
+    <button class="nav-btn active" id="nav-chart" onclick="switchTab('chart')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      MFM Chart
+    </button>
+    <button class="nav-btn" id="nav-table" onclick="switchTab('table')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      MFM Table
+    </button>
+    <div class="sidebar-section">
+      <label>Time Interval</label>
+      <select id="intervalSel" onchange="refresh()">
+        <option value="5" selected>5 min</option>
+        <option value="15">15 min</option>
+        <option value="30">30 min</option>
+        <option value="60">60 min</option>
+      </select>
+    </div>
+  </nav>
 
-        .summary {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-        }
+  <div class="main">
+    <div class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-label">MFM Devices</div>
+        <div class="stat-val accent" id="st-devices">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Records</div>
+        <div class="stat-val" id="st-records">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Frequency</div>
+        <div class="stat-val green" id="st-freq">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Power (kW)</div>
+        <div class="stat-val amber" id="st-kw">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg PF</div>
+        <div class="stat-val" id="st-pf">—</div>
+      </div>
+    </div>
 
-        .card {
-            background: white;
-            padding: 8px;
-            border-radius: 6px;
-            width: 180px;
-            text-align: center;
-        }
+    <!-- CHART PANEL -->
+    <div class="panel active" id="panel-chart">
+      <div class="chart-toolbar">
+        <span class="lbl">Parameters:</span>
+        <div id="pills-wrap"></div>
+      </div>
+      <div class="chart-area">
+        <div class="empty-state" id="chart-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <div>Data load होत आहे...</div>
+        </div>
+        <canvas id="mfmChart" style="display:none;"></canvas>
+      </div>
+    </div>
 
-        .card h4 {
-            margin: 4px 0;
-            font-size: 12px;
-            color: #555;
-        }
+    <!-- TABLE PANEL -->
+    <div class="panel" id="panel-table">
+      <div class="table-toolbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--muted)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="tableSearch" placeholder="Search..." oninput="renderTable()" />
+        <span style="font-size:11px;color:var(--muted);margin-left:auto;" id="row-count"></span>
+      </div>
+      <div class="table-area">
+        <div class="empty-state" id="table-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+          <div>Data load होत आहे...</div>
+        </div>
+        <table id="mfmTable" style="display:none;">
+          <thead id="tHead"></thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-        .card p {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 0;
-        }
+<div id="toast"></div>
 
-        .table-wrapper {
-            background: white;
-            border-radius: 6px;
-            max-height:
+<script>
+// ══ HARDCODED URL — बदलू नका ══
+const SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnT4W_ierwi_QIH_2cpAXmabMCV48jPa-v3dO5-zshOlyTmFEPYiGm9HCpphW3gr1jBgY-jqvEGMBHPtYbyRf9sbwjiR9NVmIu2G3T0GX8zP9_nwEG0szlCjPf2QAXkKDssg9lDGNYE-NQloto5WJcXAhIr6P0WZ1kTZ1pXSjkzg4n1ilXSGXBchCjNKx2q8Fb8eUxP5YInX75dIxK_WBTGAcmY10KqMe_sL8JxHO5l3lZ_QENWAhzk6HDdch1QR0odKxdC79VE1QdpxO8vBSKx6OkS4XQ&lib=MJ5HZeqMKRWvhcsmOGO96nZHe6fVZ7h-Z';
+
+const REFRESH_SEC = 300; // 5 minutes
+
+const MFM_PARAMS   = ['vr','vy','vb','ir','iy','ib','wr','wy','wb','f','pf','ikwh','ekwh','v','i','w','va','var','wh','vah','varh'];
+const DEFAULT_ON   = new Set(['w','f','pf','v','i']);
+const activeParams = new Set(DEFAULT_ON);
+const LINE_COLORS  = ['#3b82f6','#f59e0b','#22c55e','#ef4444','#a78bfa','#fb923c','#38bdf8','#f472b6','#34d399','#facc15'];
+
+let allRows = [], mfmRows = [], myChart = null;
+let sortCol = null, sortDir = 1;
+let countdown = REFRESH_SEC;
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', () => {
+  buildPills();
+  loadData();
+  startCountdown();
+});
+
+// ══ AUTO REFRESH COUNTDOWN ══
+function startCountdown() {
+  countdown = REFRESH_SEC;
+  setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      countdown = REFRESH_SEC;
+      loadData();
+    }
+    const m = String(Math.floor(countdown / 60)).padStart(1,'0');
+    const s = String(countdown % 60).padStart(2,'0');
+    document.getElementById('countdown').textContent = m + ':' + s;
+  }, 1000);
+}
+
+// ══ LOAD DATA ══
+async function loadData() {
+  setDot('loading');
+  try {
+    const resp = await fetch(SCRIPT_URL);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    parseCSV(text);
+    setDot('ok');
+    showToast('Data updated ✓', 'ok');
+  } catch(e) {
+    setDot('err');
+    showToast('Fetch error: ' + e.message, 'err');
+  }
+}
+
+// ══ PARSE CSV ══
+function parseCSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return;
+  const header = lines[0].split(',').map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (/^\d{2}-\d{2}-\d{4}$/.test(lines[i])) continue;
+    const vals = lines[i].split(',');
+    const obj = {};
+    header.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+    rows.push(obj);
+  }
+  allRows  = rows;
+  mfmRows  = rows.filter(r => (r.DeviceType || '').toUpperCase() === 'MFM');
+  updateStats();
+  refresh();
+}
+
+// ══ STATS ══
+function updateStats() {
+  const devices = new Set(mfmRows.map(r => r.DeviceName)).size;
+  document.getElementById('st-devices').textContent = devices || '—';
+  document.getElementById('st-records').textContent = mfmRows.length || '—';
+  document.getElementById('st-freq').textContent = mfmRows.length ? avgField(mfmRows,'f').toFixed(2)+' Hz' : '—';
+  document.getElementById('st-kw').textContent   = mfmRows.length ? avgField(mfmRows,'w').toFixed(2) : '—';
+  document.getElementById('st-pf').textContent   = mfmRows.length ? avgField(mfmRows,'pf').toFixed(3) : '—';
+}
+
+function avgField(rows, key) {
+  const vals = rows.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
+  return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : 0;
+}
+
+// ══ TAB ══
+function switchTab(tab) {
+  ['chart','table'].forEach(t => {
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+function refresh() { renderChart(); renderTable(); }
+
+// ══ CHART ══
+function buildPills() {
+  const wrap = document.getElementById('pills-wrap');
+  wrap.innerHTML = '';
+  MFM_PARAMS.forEach(p => {
+    const el = document.createElement('span');
+    el.className = 'pill' + (activeParams.has(p) ? ' on' : '');
+    el.textContent = p.toUpperCase();
+    el.onclick = () => {
+      if (activeParams.has(p)) { if (activeParams.size > 1) activeParams.delete(p); }
+      else activeParams.add(p);
+      el.classList.toggle('on', activeParams.has(p));
+      renderChart();
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function renderChart() {
+  if (!mfmRows.length) { showChartEmpty(true); return; }
+  showChartEmpty(false);
+  const intervalMin = parseInt(document.getElementById('intervalSel').value);
+  const buckets = bucketRows(mfmRows, intervalMin);
+  const labels  = Object.keys(buckets).sort();
+  const datasets = [];
+  let ci = 0;
+  activeParams.forEach(param => {
+    datasets.push({
+      label: param.toUpperCase(),
+      data: labels.map(l => parseFloat(avgField(buckets[l], param).toFixed(4))),
+      borderColor: LINE_COLORS[ci % LINE_COLORS.length],
+      backgroundColor: LINE_COLORS[ci % LINE_COLORS.length] + '22',
+      borderWidth: 2,
+      pointRadius: labels.length > 60 ? 0 : 3,
+      pointHoverRadius: 5,
+      tension: 0.35,
+      spanGaps: true
+    });
+    ci++;
+  });
+  if (myChart) { myChart.destroy(); }
+  myChart = new Chart(document.getElementById('mfmChart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { color:'#7a8099', font:{size:11}, boxWidth:12, padding:12, usePointStyle:true } },
+        tooltip: { backgroundColor:'#1e2333', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, titleColor:'#e8eaf0', bodyColor:'#9ba3bf', padding:10 }
+      },
+      scales: {
+        x: { ticks:{color:'#7a8099',font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:16}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y: { ticks:{color:'#7a8099',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'} }
+      }
+    }
+  });
+}
+
+function showChartEmpty(v) {
+  document.getElementById('chart-empty').style.display = v ? 'flex' : 'none';
+  document.getElementById('mfmChart').style.display    = v ? 'none' : 'block';
+}
+
+// ══ TABLE ══
+function renderTable() {
+  if (!mfmRows.length) { showTableEmpty(true); return; }
+  showTableEmpty(false);
+  const intervalMin = parseInt(document.getElementById('intervalSel').value);
+  const buckets  = bucketRows(mfmRows, intervalMin);
+  const search   = (document.getElementById('tableSearch').value || '').toLowerCase();
+  const allCols  = ['time','count',...MFM_PARAMS];
+  let tableData  = Object.keys(buckets).sort().map(l => {
+    const obj = { time: l, count: buckets[l].length };
+    MFM_PARAMS.forEach(p => { const v = avgField(buckets[l], p); obj[p] = isNaN(v) ? null : v; });
+    return obj;
+  });
+  if (search) tableData = tableData.filter(row => allCols.some(c => String(row[c]??'').toLowerCase().includes(search)));
+  if (sortCol) tableData.sort((a,b) => {
+    const av = a[sortCol]??-Infinity, bv = b[sortCol]??-Infinity;
+    return (av<bv?-1:av>bv?1:0)*sortDir;
+  });
+  document.getElementById('row-count').textContent = tableData.length + ' rows';
+  document.getElementById('tHead').innerHTML = '<tr>' + allCols.map(c => {
+    const arrow = sortCol===c ? (sortDir===1?' ▲':' ▼') : '';
+    return `<th onclick="sortTable('${c}')">${c.toUpperCase()}${arrow}</th>`;
+  }).join('') + '</tr>';
+  document.getElementById('tBody').innerHTML = tableData.map(row =>
+    '<tr>' + allCols.map(c => {
+      if (c==='time')  return `<td class="time-col">${row.time}</td>`;
+      if (c==='count') return `<td><span class="badge badge-ok">${row.count}</span></td>`;
+      const v = row[c];
+      if (v===null) return `<td class="num" style="color:var(--muted)">—</td>`;
+      return `<td class="num ${v<0?'neg':''}">${v.toFixed(3)}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+}
+
+function sortTable(col) {
+  sortDir = sortCol===col ? -sortDir : 1;
+  sortCol = col;
+  renderTable();
+}
+
+function showTableEmpty(v) {
+  document.getElementById('table-empty').style.display = v ? 'flex'  : 'none';
+  document.getElementById('mfmTable').style.display    = v ? 'none'  : 'table';
+}
+
+// ══ UTILS ══
+function bucketRows(rows, intervalMin) {
+  const buckets = {};
+  rows.forEach(r => {
+    const ts = (r.Timestamp||r.timestamp||'').trim();
+    if (!ts) return;
+    const [h,m] = ts.split(':').map(Number);
+    if (isNaN(h)||isNaN(m)) return;
+    const slot = Math.floor((h*60+m)/intervalMin)*intervalMin;
+    const key  = String(Math.floor(slot/60)).padStart(2,'0')+':'+String(slot%60).padStart(2,'0');
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(r);
+  });
+  return buckets;
+}
+
+function setDot(s) { document.getElementById('status-dot').className = s||''; }
+
+let toastT;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show '+(type||'');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { t.className=''; }, 2800);
+}
+</script>
+</body>
+</html>
