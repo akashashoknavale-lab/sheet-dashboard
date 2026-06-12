@@ -1,963 +1,527 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mr">
 <head>
-    <!-- ================= BASIC META & TITLE ================= -->
-    <meta charset="UTF-8">
-    <title>Solar Plant Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ================= CHART LIBRARIES ================= -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MFM Energy Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:       #0f1117;
+    --surface:  #181c27;
+    --surface2: #1e2333;
+    --border:   rgba(255,255,255,0.08);
+    --border2:  rgba(255,255,255,0.14);
+    --text:     #e8eaf0;
+    --muted:    #7a8099;
+    --accent:   #3b82f6;
+    --accent2:  #60a5fa;
+    --green:    #22c55e;
+    --amber:    #f59e0b;
+    --red:      #ef4444;
+    --radius:   10px;
+    --radius-sm:6px;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px; line-height: 1.5;
+    display: flex; flex-direction: column;
+  }
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-    <!-- ================= LOGOUT BUTTON ================= -->
-    <button onclick="logout()" style="font-size:11px;">Logout</button>    
-    <script>
-        function logout() {
-            localStorage.removeItem("loginUser");
-            window.location.href = "login.html";
-        }
-    </script>
-    <!-- ================= STYLES ================= -->
-    <style>
-        .inverter-btn {
-            padding: 6px 14px;
-            font-size: 12px;
-            cursor: pointer;
-            background: #2ecc71;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            }
-            .inverter-btn:hover {
-                background: #27ae60;
-            }
-    
-        .company-title {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 4px 0 6px 0;
-            background: white;
-            padding: 6px;
-            border-radius: 6px;
-        }
-    body 
-        <button onclick="openInverterPage()" class="inverter-btn">
-            🔌 View Inverter Data
-        </button>
+  /* HEADER */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .logo {
+    width: 32px; height: 32px; background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff;
+  }
+  header h1 { font-size: 15px; font-weight: 600; }
+  header .sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  #refresh-info { font-size: 11px; color: var(--muted); }
+  #refresh-info span { color: var(--accent2); font-weight: 600; }
+  #status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .3s, box-shadow .3s;
+  }
+  #status-dot.ok      { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  #status-dot.err     { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  #status-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-        {
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-            padding: 1px;
-        }
-            
-        h2 {
-            text-align: left;
-            margin-bottom: 1px;
-        }
+  /* LAYOUT */
+  .layout { display: flex; flex: 1; overflow: hidden; }
 
-        .filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1px;
-        }
-        <br>
+  /* SIDEBAR */
+  .sidebar {
+    width: 165px; flex-shrink: 0;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 14px 0;
+  }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 0 16px 8px;
+  }
+  .nav-btn {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 16px; font-size: 13px; font-weight: 500;
+    color: var(--muted); background: none; border: none;
+    width: 100%; text-align: left; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: color .15s, background .15s;
+  }
+  .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(59,130,246,.08); }
+  .sidebar-section { margin-top: 18px; padding: 0 12px; }
+  .sidebar-section label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .sidebar-section select {
+    width: 100%; padding: 6px 8px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 12px;
+    cursor: pointer; outline: none;
+  }
 
-        .dropdown {
-            position: relative;
-        }
+  /* MAIN */
+  .main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
-        .dropdown button {
-            padding: 3px 6px;
-            border: 1px solid #999;
-            background: white;
-            cursor: pointer;
-            font-size: 12px;
-        }
+  /* STAT STRIP */
+  .stat-strip {
+    display: flex; gap: 10px; padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .stat-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 13px; min-width: 105px;
+  }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat-val   { font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .stat-val.accent { color: var(--accent2); }
+  .stat-val.green  { color: var(--green); }
+  .stat-val.amber  { color: var(--amber); }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 8px;
-            z-index: 10;
-            width: 200px;
-        }
+  /* PANELS */
+  .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .panel.active { display: flex; }
 
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
+  /* CHART PANEL */
+  .chart-toolbar {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    padding: 9px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .chart-toolbar .lbl { font-size: 11px; color: var(--muted); margin-right: 2px; }
+  .pill {
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border2); cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .pill:hover { color: var(--text); }
+  .pill.on { background: rgba(59,130,246,.18); color: var(--accent2); border-color: var(--accent); }
+  .chart-area { flex: 1; padding: 14px 16px; position: relative; }
+  #mfmChart { width: 100% !important; height: 100% !important; }
 
-        .dropdown-content label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 2px;
-        }
+  /* TABLE PANEL */
+  .table-toolbar {
+    padding: 9px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .table-toolbar input {
+    padding: 6px 10px; background: var(--bg); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 12.5px;
+    width: 200px; outline: none;
+  }
+  .table-toolbar input:focus { border-color: var(--accent); }
+  .table-area { flex: 1; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--surface); padding: 8px 10px;
+    text-align: left; font-size: 10.5px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+    border-bottom: 1px solid var(--border2); white-space: nowrap;
+    cursor: pointer; user-select: none;
+  }
+  thead th:hover { color: var(--text); }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:hover td { background: rgba(255,255,255,.03); }
+  tbody td { padding: 7px 10px; color: var(--text); white-space: nowrap; }
+  tbody td.time-col { font-weight: 600; color: var(--accent2); }
+  tbody td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  tbody td.neg { color: var(--red); }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+  .badge-ok { background: rgba(34,197,94,.15); color: #4ade80; }
 
-        .action-btn {
-            font-size: 12px;
-            margin-bottom: 2px;
-            width: 48%;
-            cursor: pointer;
-        }
+  /* EMPTY */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px; flex: 1;
+    color: var(--muted); font-size: 13px;
+  }
+  .empty-state svg { width: 44px; height: 44px; opacity: .3; }
 
-        .top-container {
-         display: flex;
-         font-size: 14px;      /* 🔽 reduce more if needed: 9px / 8px */
-         justify-content: space-between;
-         gap: 15px;
-         margin-bottom: 20px;
-        }
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 20px; right: 20px;
+    padding: 9px 15px; border-radius: var(--radius);
+    font-size: 12.5px; font-weight: 500;
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .25s, transform .25s;
+    pointer-events: none; z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.ok  { border-color: var(--green); color: var(--green); }
+  #toast.err { border-color: var(--red);   color: var(--red); }
 
-        .comparison-container {
-         display: flex;
-         flex-wrap: wrap;
-         column-gap: 5px;
-         /* horizontal space between tables */
-         row-gap: 20px;
-         /* vertical space between rows of tables (reduced) */
-         width: 35%;
-        }
-
-        .chart-container {
-         display: flex;
-         flex-direction: column;
-         gap: 5px;
-        }
-
-        .chart-row {
-         display: flex;
-         gap: 10px;
-        }
-
-        canvas {
-        background: white;
-        padding: 5px;
-        border-radius: 10px;
-        }
-
-        .comparison-table {
-        width: 120px;
-        border-collapse: collapse;
-        background: white;
-        }
-
-        .comparison-table th,
-        .comparison-table td {
-        border: 1px solid #ccc;
-        padding: 4px;
-        text-align: center;
-        font-size: 10px;
-        }
-
-        .comparison-table th {
-        background: #34495e;
-        color: white;
-        }
-
-        .diff-positive {
-        background: #c8e6c9;
-        color: #256029;
-        }
-
-        .diff-negative {
-        background: #ffcccc;
-        color: #a50000;
-        }
-
-        .table-wrapper {
-        max-height: 400px;
-        overflow-y: auto;
-        background: white;
-        }
-
-        .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        }
-
-        .data-table th,
-        .data-table td {
-        border: 1px solid #ccc;
-        padding: 6px;
-        font-size: 10px;
-        text-align: center;
-        }
-
-        .data-table th {
-         background: #34495e;
-         color: white;
-         position: sticky;
-         top: 0;
-        }
-
-        /* Monthly summary column width control */
-        .monthly-summary-table th,
-        .monthly-summary-table td {
-         min-width: 120px;
-        /* increase/decrease as needed */
-         white-space: nowrap;
-        }
-
-        /* Individual column control */
-        .monthly-summary-table th:nth-child(1),
-        .monthly-summary-table td:nth-child(1) {
-         min-width: 80px;
-         /* Month */
-        }
-
-        .monthly-summary-table th:nth-child(2),
-        .monthly-summary-table td:nth-child(2) {
-         min-width: 150px;
-        /* Total Generation */
-        }
-
-        .monthly-summary-table th:nth-child(3),
-        .monthly-summary-table td:nth-child(3) {
-         min-width: 120px;
-         /* Avg PR */
-        }
-
-        .monthly-summary-table th:nth-child(4),
-        .monthly-summary-table td:nth-child(4) {
-         min-width: 180px;
-         /* Energy Availability */
-        }
-
-        .monthly-summary-table th:nth-child(5),
-        .monthly-summary-table td:nth-child(5) {
-        min-width: 120px;
-            /* Avg CUF */
-        }
-        /* Limit big data table to first 18 columns only */
-        .data-table th:nth-child(n+19),
-        .data-table td:nth-child(n+19) {
-        display: none;
-        }
-    </style>
-    </head>
-
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
 <body>
-    <h1 class="company-title">
-        BHAGERIA GREEN ENERGY SOLUTIONS PRIVATE LIMITED
-    </h1>
-    <h2>☀️ Captive Plant Solar Park 1 & 2</h2>
 
-    <div class="filters">
-        <div class="dropdown">
-            <button>Select Plant</button>
-            <div class="dropdown-content" id="plantFilter">
-                <button class="action-btn" onclick="selectAll('plant')">Select All</button>
-                <button class="action-btn" onclick="deselectAll('plant')">Deselect All</button>
-            </div>
-        </div>
+<header>
+  <div class="logo">⚡</div>
+  <div>
+    <h1>MFM Energy Dashboard</h1>
+    <div class="sub">Real-time metering data</div>
+  </div>
+  <div class="hdr-right">
+    <div id="refresh-info">Auto-refresh: <span id="countdown">5:00</span></div>
+    <div id="status-dot" title="Data status"></div>
+  </div>
+</header>
 
-        <div class="dropdown">
-            <button>Select Month</button>
-            <div class="dropdown-content" id="monthFilter">
-                <button class="action-btn" onclick="selectAll('month')">Select All</button>
-                <button class="action-btn" onclick="deselectAll('month')">Deselect All</button>
-            </div>
-        </div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-label">Views</div>
+    <button class="nav-btn active" id="nav-chart" onclick="switchTab('chart')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      MFM Chart
+    </button>
+    <button class="nav-btn" id="nav-table" onclick="switchTab('table')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      MFM Table
+    </button>
+    <div class="sidebar-section">
+      <label>Time Interval</label>
+      <select id="intervalSel" onchange="refresh()">
+        <option value="5" selected>5 min</option>
+        <option value="15">15 min</option>
+        <option value="30">30 min</option>
+        <option value="60">60 min</option>
+      </select>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-label">MFM Devices</div>
+        <div class="stat-val accent" id="st-devices">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Records</div>
+        <div class="stat-val" id="st-records">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Frequency</div>
+        <div class="stat-val green" id="st-freq">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Power (kW)</div>
+        <div class="stat-val amber" id="st-kw">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg PF</div>
+        <div class="stat-val" id="st-pf">—</div>
+      </div>
     </div>
 
-    <div class="top-container">
-
-        <div class="comparison-container">
-
-            <div>
-                <h4 style="text-align:center;color:red;">Total Generation</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Actual</th>
-                        <th>Expected</th>
-                        <th>Diff</th>
-                    </tr>
-                    <tr>
-                        <td id="genActual">0</td>
-                        <td id="genExpected">0</td>
-                        <td id="genDiff">0%</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div>
-                <h4 style="text-align:center;color:purple;">Total IR</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Actual</th>
-                        <th>Expected</th>
-                        <th>Diff</th>
-                    </tr>
-                    <tr>
-                        <td id="irActual">0</td>
-                        <td id="irExpected">0</td>
-                        <td id="irDiff">0%</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div>
-                <h4 style="text-align:center;color:green;">Exp Gen diff with Actual IR</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Actual</th>
-                        <th>Expected</th>
-                        <th>Diff</th>
-                    </tr>
-                    <tr>
-                        <td id="expIRActual">0</td>
-                        <td id="expIRExpected">0</td>
-                        <td id="expIRDiff">0%</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div>
-                <h4 style="text-align:center;color:#e74c3c;">Avg PR%</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Actual</th>
-                        <th>Expected</th>
-                    </tr>
-                    <tr>
-                        <td id="prActual">0%</td>
-                        <td id="prExpected">0%</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div>
-                <h4 style="text-align:center;color:#2980b9;">Avg CUF%</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Actual</th>
-                        <th>Expected</th>
-                    </tr>
-                    <tr>
-                        <td id="cufActual">0%</td>
-                        <td id="cufExpected">0%</td>
-                    </tr>
-                </table>
-            </div>
-            <div>
-                <h4 style="text-align:center;color:#2c3e50;">Plant Availability</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Availability</th>
-                    </tr>
-                    <tr>
-                        <td id="plantAvail">0%</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div>
-                <h4 style="text-align:center;color:red;">Grid Availability</h4>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Availability</th>
-                    </tr>
-                    <tr>
-                        <td id="gridAvail">0%</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div>
-                <h4 style="text-align:center;color:#ff5722;">Monthly Summary</h4>
-                <table class="comparison-table monthly-summary-table" id="monthlySummaryTable">
-                    <thead>
-                        <tr>
-                            <th>Month</th>
-                            <th>Total Generation (KWh)</th>
-                            <th>Average PR%</th>
-                            <th>Energy Availability vs Expected</th>
-                            <th>Average CUF%</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-
-
+    <!-- CHART PANEL -->
+    <div class="panel active" id="panel-chart">
+      <div class="chart-toolbar">
+        <span class="lbl">Parameters:</span>
+        <div id="pills-wrap"></div>
+      </div>
+      <div class="chart-area">
+        <div class="empty-state" id="chart-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <div>Data load होत आहे...</div>
         </div>
-
-        <div class="chart-container">
-            <div class="chart-row">
-                <canvas id="barChart" width="400" height="250"></canvas>
-                <canvas id="pieChart1" width="400" height="250"></canvas>
-            </div>
-            <div class="chart-row">
-                <canvas id="pieChart2" width="400" height="250"></canvas>
-                <canvas id="pieChart3" width="400" height="250"></canvas>
-            </div>
-        </div>
-
+        <canvas id="mfmChart" style="display:none;"></canvas>
+      </div>
     </div>
 
-    <div class="table-wrapper">
-        <table class="data-table" id="dataTable">
-            <thead></thead>
-            <tbody></tbody>
+    <!-- TABLE PANEL -->
+    <div class="panel" id="panel-table">
+      <div class="table-toolbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--muted)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="tableSearch" placeholder="Search..." oninput="renderTable()" />
+        <span style="font-size:11px;color:var(--muted);margin-left:auto;" id="row-count"></span>
+      </div>
+      <div class="table-area">
+        <div class="empty-state" id="table-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+          <div>Data load होत आहे...</div>
+        </div>
+        <table id="mfmTable" style="display:none;">
+          <thead id="tHead"></thead>
+          <tbody id="tBody"></tbody>
         </table>
+      </div>
     </div>
+  </div>
+</div>
 
-    <script>
-        
-        function openInverterPage(){
-            window.location.href = "inverter.html";
-        }
+<div id="toast"></div>
 
-        const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+<script>
+// ══ HARDCODED URL — बदलू नका ══
+const SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnT4W_ierwi_QIH_2cpAXmabMCV48jPa-v3dO5-zshOlyTmFEPYiGm9HCpphW3gr1jBgY-jqvEGMBHPtYbyRf9sbwjiR9NVmIu2G3T0GX8zP9_nwEG0szlCjPf2QAXkKDssg9lDGNYE-NQloto5WJcXAhIr6P0WZ1kTZ1pXSjkzg4n1ilXSGXBchCjNKx2q8Fb8eUxP5YInX75dIxK_WBTGAcmY10KqMe_sL8JxHO5l3lZ_QENWAhzk6HDdch1QR0odKxdC79VE1QdpxO8vBSKx6OkS4XQ&lib=MJ5HZeqMKRWvhcsmOGO96nZHe6fVZ7h-Z';
 
-        function openInverterPage(){
-          window.location.href = "inverter.html"; // your new HTML file
-        }
-    
-        if (!loginUser) {
-            window.location.href = "login.html";
-        }
+const REFRESH_SEC = 300; // 5 minutes
 
-        
-        const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
-        const GID = "0";
-        
-        const PLANT_COL = 0;
-        const MONTH_COL = 1;
-        const ACTUAL_COL = 3;
-        const EXPECTED_COL = 4;
-        const IR_ACTUAL_COL = 5;
-        const IR_EXPECTED_COL = 6;
-        const PR_ACTUAL_COL = 7;
-        const PR_EXPECTED_COL = 8;
-        const CUF_ACTUAL_COL = 10;
-        const CUF_EXPECTED_COL = 11;
-        const PLANT_AVAIL_COL = 13;
-        const GRID_AVAIL_COL = 14;
-        const EX_G_AC_PR = 17;
+const MFM_PARAMS   = ['vr','vy','vb','ir','iy','ib','wr','wy','wb','f','pf','ikwh','ekwh','v','i','w','va','var','wh','vah','varh'];
+const DEFAULT_ON   = new Set(['w','f','pf','v','i']);
+const activeParams = new Set(DEFAULT_ON);
+const LINE_COLORS  = ['#3b82f6','#f59e0b','#22c55e','#ef4444','#a78bfa','#fb923c','#38bdf8','#f472b6','#34d399','#facc15'];
 
-        let allData = [];
-        let selectedPlants = new Set();
-        let selectedMonths = new Set();
+let allRows = [], mfmRows = [], myChart = null;
+let sortCol = null, sortDir = 1;
+let countdown = REFRESH_SEC;
 
-        let barChartObj, pieChart1Obj, pieChart2Obj, pieChart3Obj;
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', () => {
+  buildPills();
+  loadData();
+  startCountdown();
+});
 
-        fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`)
-            .then(r => r.text())
-            .then(csv => {
-                const rows = csv.split("\n").map(r => r.split(",").map(c => c.replace(/"/g, "").trim()));
-                const headers = rows.shift();
-                allData = rows;
-                document.querySelector("#dataTable thead").innerHTML =
-                    "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-                createFilters();
-                updateView();
-            });
+// ══ AUTO REFRESH COUNTDOWN ══
+function startCountdown() {
+  countdown = REFRESH_SEC;
+  setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      countdown = REFRESH_SEC;
+      loadData();
+    }
+    const m = String(Math.floor(countdown / 60)).padStart(1,'0');
+    const s = String(countdown % 60).padStart(2,'0');
+    document.getElementById('countdown').textContent = m + ':' + s;
+  }, 1000);
+}
 
-        function isCompletedMonth(monthStr) {
-                // monthStr example: "Apr-25"
-                const [mon, yr] = monthStr.split("-");
-                const monthMap = {
-                    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-                    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-                };
-            
-                const monthIndex = monthMap[mon];
-                const year = 2000 + parseInt(yr); // "25" → 2025
-            
-                const monthDate = new Date(year, monthIndex + 1, 0); // last day of month
-                const today = new Date();
-            
-                return monthDate < today; // completed month
-            } 
-        function createFilters() {
-            let allowedPlants = new Set();
-        
-            // 🔑 Clear old selections
-            selectedPlants.clear();
-            selectedMonths.clear();
-        
-            // ADMIN → all plants
-            if (loginUser.role === "admin" || loginUser.plants === "ALL") {
-                allData.forEach(r => allowedPlants.add(r[PLANT_COL]));
-            }
-            // CUSTOMER → only assigned plants
-            else {
-                loginUser.plants
-                    .split(",")
-                    .map(p => p.trim())
-                    .forEach(p => allowedPlants.add(p));
-            }
-        
-            // ✅ Create plant checkboxes ONLY for allowed plants
-            allowedPlants.forEach(p => {
-                addCheckbox("plantFilter", p, selectedPlants);
-            });
-        
-            // ✅ Months (same for all users)
-            [...new Set(allData.map(r => r[MONTH_COL]))]
-                .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
-        }
+// ══ LOAD DATA ══
+async function loadData() {
+  setDot('loading');
+  try {
+    const resp = await fetch(SCRIPT_URL);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    parseCSV(text);
+    setDot('ok');
+    showToast('Data updated ✓', 'ok');
+  } catch(e) {
+    setDot('err');
+    showToast('Fetch error: ' + e.message, 'err');
+  }
+}
 
+// ══ PARSE CSV ══
+function parseCSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return;
+  const header = lines[0].split(',').map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (/^\d{2}-\d{2}-\d{4}$/.test(lines[i])) continue;
+    const vals = lines[i].split(',');
+    const obj = {};
+    header.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+    rows.push(obj);
+  }
+  allRows  = rows;
+  mfmRows  = rows.filter(r => (r.DeviceType || '').toUpperCase() === 'MFM');
+  updateStats();
+  refresh();
+}
 
+// ══ STATS ══
+function updateStats() {
+  const devices = new Set(mfmRows.map(r => r.DeviceName)).size;
+  document.getElementById('st-devices').textContent = devices || '—';
+  document.getElementById('st-records').textContent = mfmRows.length || '—';
+  document.getElementById('st-freq').textContent = mfmRows.length ? avgField(mfmRows,'f').toFixed(2)+' Hz' : '—';
+  document.getElementById('st-kw').textContent   = mfmRows.length ? avgField(mfmRows,'w').toFixed(2) : '—';
+  document.getElementById('st-pf').textContent   = mfmRows.length ? avgField(mfmRows,'pf').toFixed(3) : '—';
+}
 
-        function addCheckbox(id, val, set) {
-                const l = document.createElement("label");
-                const c = document.createElement("input");
-                c.type = "checkbox";
-            
-                // ✅ Auto-check only completed months
-                if (id === "monthFilter") {
-                    if (isCompletedMonth(val)) {
-                        c.checked = true;
-                        set.add(val);
-                    } else {
-                        c.checked = false; // incomplete month stays unchecked
-                    }
-                } else {
-                    // plants → default checked
-                    c.checked = true;
-                    set.add(val);
-                }
-            
-                c.onchange = () => {
-                    c.checked ? set.add(val) : set.delete(val);
-                    updateView();
-                };
-            
-                l.appendChild(c);
-                l.append(" " + val);
-                document.getElementById(id).appendChild(l);
-            }
+function avgField(rows, key) {
+  const vals = rows.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
+  return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : 0;
+}
 
-        function selectAll(t) {
-            const s = t === "plant" ? selectedPlants : selectedMonths;
-            document.querySelectorAll(`#${t}Filter input`).forEach(c => {
-                c.checked = true;
-                s.add(c.parentNode.textContent.trim())
-            });
-            updateView();
-        }
+// ══ TAB ══
+function switchTab(tab) {
+  ['chart','table'].forEach(t => {
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+}
 
-        function deselectAll(t) {
-            const s = t === "plant" ? selectedPlants : selectedMonths;
-            s.clear();
-            document.querySelectorAll(`#${t}Filter input`).forEach(c => c.checked = false);
-            updateView();
-        }
+function refresh() { renderChart(); renderTable(); }
 
-        function updateView() {
-            updateTable();
-            updateComparison();
-            updateMonthlySummary(); // <-- new
-            updateChart();
-        }
+// ══ CHART ══
+function buildPills() {
+  const wrap = document.getElementById('pills-wrap');
+  wrap.innerHTML = '';
+  MFM_PARAMS.forEach(p => {
+    const el = document.createElement('span');
+    el.className = 'pill' + (activeParams.has(p) ? ' on' : '');
+    el.textContent = p.toUpperCase();
+    el.onclick = () => {
+      if (activeParams.has(p)) { if (activeParams.size > 1) activeParams.delete(p); }
+      else activeParams.add(p);
+      el.classList.toggle('on', activeParams.has(p));
+      renderChart();
+    };
+    wrap.appendChild(el);
+  });
+}
 
-        function updateTable() {
-            const tb = document.querySelector("#dataTable tbody");
-            tb.innerHTML = "";
-            allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-                    const tr = document.createElement("tr");
-                    r.forEach(c => {
-                        const td = document.createElement("td");
-                        td.innerText = c;
-                        tr.appendChild(td)
-                    });
-                    tb.appendChild(tr);
-                }
-            });
-        }
+function renderChart() {
+  if (!mfmRows.length) { showChartEmpty(true); return; }
+  showChartEmpty(false);
+  const intervalMin = parseInt(document.getElementById('intervalSel').value);
+  const buckets = bucketRows(mfmRows, intervalMin);
+  const labels  = Object.keys(buckets).sort();
+  const datasets = [];
+  let ci = 0;
+  activeParams.forEach(param => {
+    datasets.push({
+      label: param.toUpperCase(),
+      data: labels.map(l => parseFloat(avgField(buckets[l], param).toFixed(4))),
+      borderColor: LINE_COLORS[ci % LINE_COLORS.length],
+      backgroundColor: LINE_COLORS[ci % LINE_COLORS.length] + '22',
+      borderWidth: 2,
+      pointRadius: labels.length > 60 ? 0 : 3,
+      pointHoverRadius: 5,
+      tension: 0.35,
+      spanGaps: true
+    });
+    ci++;
+  });
+  if (myChart) { myChart.destroy(); }
+  myChart = new Chart(document.getElementById('mfmChart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { color:'#7a8099', font:{size:11}, boxWidth:12, padding:12, usePointStyle:true } },
+        tooltip: { backgroundColor:'#1e2333', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, titleColor:'#e8eaf0', bodyColor:'#9ba3bf', padding:10 }
+      },
+      scales: {
+        x: { ticks:{color:'#7a8099',font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:16}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y: { ticks:{color:'#7a8099',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'} }
+      }
+    }
+  });
+}
 
-        function updateComparison() {
-            let ag = 0,
-                eg = 0,
-                ai = 0,
-                ei = 0,
-                prA = 0,
-                prE = 0,
-                cufA = 0,
-                cufE = 0,
-                c = 0;
-            let expIRAct = 0,
-                expIRExp = 0;
-            let plantAvailSum = 0;
-            let gridAvailSum = 0;
+function showChartEmpty(v) {
+  document.getElementById('chart-empty').style.display = v ? 'flex' : 'none';
+  document.getElementById('mfmChart').style.display    = v ? 'none' : 'block';
+}
 
+// ══ TABLE ══
+function renderTable() {
+  if (!mfmRows.length) { showTableEmpty(true); return; }
+  showTableEmpty(false);
+  const intervalMin = parseInt(document.getElementById('intervalSel').value);
+  const buckets  = bucketRows(mfmRows, intervalMin);
+  const search   = (document.getElementById('tableSearch').value || '').toLowerCase();
+  const allCols  = ['time','count',...MFM_PARAMS];
+  let tableData  = Object.keys(buckets).sort().map(l => {
+    const obj = { time: l, count: buckets[l].length };
+    MFM_PARAMS.forEach(p => { const v = avgField(buckets[l], p); obj[p] = isNaN(v) ? null : v; });
+    return obj;
+  });
+  if (search) tableData = tableData.filter(row => allCols.some(c => String(row[c]??'').toLowerCase().includes(search)));
+  if (sortCol) tableData.sort((a,b) => {
+    const av = a[sortCol]??-Infinity, bv = b[sortCol]??-Infinity;
+    return (av<bv?-1:av>bv?1:0)*sortDir;
+  });
+  document.getElementById('row-count').textContent = tableData.length + ' rows';
+  document.getElementById('tHead').innerHTML = '<tr>' + allCols.map(c => {
+    const arrow = sortCol===c ? (sortDir===1?' ▲':' ▼') : '';
+    return `<th onclick="sortTable('${c}')">${c.toUpperCase()}${arrow}</th>`;
+  }).join('') + '</tr>';
+  document.getElementById('tBody').innerHTML = tableData.map(row =>
+    '<tr>' + allCols.map(c => {
+      if (c==='time')  return `<td class="time-col">${row.time}</td>`;
+      if (c==='count') return `<td><span class="badge badge-ok">${row.count}</span></td>`;
+      const v = row[c];
+      if (v===null) return `<td class="num" style="color:var(--muted)">—</td>`;
+      return `<td class="num ${v<0?'neg':''}">${v.toFixed(3)}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+}
 
-            allData.forEach(r => {
-                if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-                    ag += +r[ACTUAL_COL] || 0;
-                    eg += +r[EXPECTED_COL] || 0;
-                    ai += +r[IR_ACTUAL_COL] || 0;
-                    ei += +r[IR_EXPECTED_COL] || 0;
-                    prA  += parseFloat(r[PR_ACTUAL_COL]) || 0;
-                    prE  += parseFloat(r[PR_EXPECTED_COL]) || 0;
-                    cufA += parseFloat(r[CUF_ACTUAL_COL]) || 0;
-                    cufE += parseFloat(r[CUF_EXPECTED_COL]) || 0;
-                    expIRAct += +r[ACTUAL_COL] || 0;
-                    expIRExp += +r[EX_G_AC_PR] || 0;
-                    plantAvailSum += +r[PLANT_AVAIL_COL] || 0;
-                    gridAvailSum += +r[GRID_AVAIL_COL] || 0;
+function sortTable(col) {
+  sortDir = sortCol===col ? -sortDir : 1;
+  sortCol = col;
+  renderTable();
+}
 
-                    c++;
-                }
-            });
-            plantAvail.innerText = (plantAvailSum / c).toFixed(2) + "%";
-            gridAvail.innerText  = (gridAvailSum / c).toFixed(2) + "%";
+function showTableEmpty(v) {
+  document.getElementById('table-empty').style.display = v ? 'flex'  : 'none';
+  document.getElementById('mfmTable').style.display    = v ? 'none'  : 'table';
+}
 
+// ══ UTILS ══
+function bucketRows(rows, intervalMin) {
+  const buckets = {};
+  rows.forEach(r => {
+    const ts = (r.Timestamp||r.timestamp||'').trim();
+    if (!ts) return;
+    const [h,m] = ts.split(':').map(Number);
+    if (isNaN(h)||isNaN(m)) return;
+    const slot = Math.floor((h*60+m)/intervalMin)*intervalMin;
+    const key  = String(Math.floor(slot/60)).padStart(2,'0')+':'+String(slot%60).padStart(2,'0');
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(r);
+  });
+  return buckets;
+}
 
-            genActual.innerText = Math.round(ag).toLocaleString();
-            genExpected.innerText = Math.round(eg).toLocaleString();
-            genDiff.innerText = ((ag - eg) / eg * 100).toFixed(2) + "%";
+function setDot(s) { document.getElementById('status-dot').className = s||''; }
 
-            irActual.innerText = (ai / c).toFixed(2);
-            irExpected.innerText = (ei / c).toFixed(2);
-            irDiff.innerText = (((ai / c) - (ei / c)) / (ei / c) * 100).toFixed(2) + "%";
-
-            expIRActual.innerText = Math.round(expIRAct).toLocaleString();
-            expIRExpected.innerText = Math.round(expIRExp).toLocaleString();
-            expIRDiff.innerText = ((expIRAct - expIRExp) / expIRExp * 100).toFixed(2) + "%";
-
-            prActual.innerText  = c ? (prA / c).toFixed(2) + "%" : "0%";
-            prExpected.innerText = c ? (prE / c).toFixed(2) + "%" : "0%";
-            
-            cufActual.innerText  = c ? (cufA / c).toFixed(2) + "%" : "0%";
-            cufExpected.innerText = c ? (cufE / c).toFixed(2) + "%" : "0%";
-
-        }
-
-            function updateMonthlySummary() {
-                const monthData = {};
-            
-                allData.forEach(r => {
-                    if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-            
-                        const month = r[MONTH_COL];
-            
-                        if (!monthData[month]) {
-                            monthData[month] = {
-                                gen: 0,
-                                pr: 0,
-                                cuf: 0,
-                                avail: 0,
-                                count: 0
-                            };
-                        }
-            
-                        monthData[month].gen += +r[ACTUAL_COL] || 0;
-                        monthData[month].pr  += parseFloat(r[PR_ACTUAL_COL]) || 0;
-                        monthData[month].cuf += parseFloat(r[CUF_ACTUAL_COL]) || 0;
-                        monthData[month].avail += +r[IR_ACTUAL_COL] || 0;
-                        monthData[month].count++;
-                    }
-                });
-            
-                const tbody = document.querySelector("#monthlySummaryTable tbody");
-                tbody.innerHTML = "";
-            
-                const monthOrder = [
-                    "Apr-25","May-25","Jun-25","Jul-25","Aug-25","Sep-25",
-                    "Oct-25","Nov-25","Dec-25","Jan-26","Feb-26","Mar-26"
-                ];
-            
-                monthOrder
-                    .filter(m => monthData[m])
-                    .forEach(month => {
-            
-                        const d = monthData[month];
-            
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${month}</td>
-                            <td>${Math.round(d.gen).toLocaleString()}</td>
-                            <td>${(d.pr / d.count).toFixed(2)}%</td>
-                            <td>${(d.avail / d.count).toFixed(2)}%</td>
-                            <td>${(d.cuf / d.count).toFixed(2)}%</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-            }
-
-        function updateChart() {
-                
-                    const m = {};
-                    const pieGen = {};
-                    const expectedGen = {};
-                
-                    // 🔹 For average PR
-                    const piePRSum = {};
-                    const piePRCount = {};
-                
-                    // 🔹 For average CUF
-                    const pieCUFSum = {};
-                    const pieCUFCount = {};
-                
-                    allData.forEach(r => {
-                        if (selectedPlants.has(r[PLANT_COL]) && selectedMonths.has(r[MONTH_COL])) {
-                
-                            const month = r[MONTH_COL];
-                
-                            // ---- Bar chart (actual and exprected Generation MWh) ----
-                            m[month] = (m[month] || 0) + (+r[ACTUAL_COL] / 1000);
-                            expectedGen[month] = (expectedGen[month] || 0) + (+r[EXPECTED_COL] / 1000);
-                
-                            // ---- Pie 1 (Generation) ----
-                            pieGen[month] = (pieGen[month] || 0) + (+r[ACTUAL_COL]);
-                
-                            // ---- PR (Average month-wise) ----
-                            piePRSum[month] = (piePRSum[month] || 0) + (parseFloat(r[PR_ACTUAL_COL]) || 0);
-                            piePRCount[month] = (piePRCount[month] || 0) + 1;
-                
-                            // ---- CUF (Average month-wise) ----
-                            pieCUFSum[month] = (pieCUFSum[month] || 0) + (parseFloat(r[CUF_ACTUAL_COL]) || 0);
-                            pieCUFCount[month] = (pieCUFCount[month] || 0) + 1;
-                        }
-                    });
-                
-                    // ✅ Convert sums to averages
-                    const piePR = {};
-                    Object.keys(piePRSum).forEach(m => {
-                        piePR[m] = +(piePRSum[m] / piePRCount[m]).toFixed(2);
-                    });
-                
-                    const pieCUF = {};
-                    Object.keys(pieCUFSum).forEach(m => {
-                        pieCUF[m] = +(pieCUFSum[m] / pieCUFCount[m]).toFixed(2);
-                    });
-                
-                    // 🔥 Destroy old charts
-                    if (barChartObj) barChartObj.destroy();
-                    if (pieChart1Obj) pieChart1Obj.destroy();
-                    if (pieChart2Obj) pieChart2Obj.destroy();
-                    if (pieChart3Obj) pieChart3Obj.destroy();
-                
-                    // ================= BAR CHART =================
-                        barChartObj = new Chart(barChart, {
-                            data: {
-                                labels: Object.keys(m),
-                                datasets: [
-                                    {
-                                        type: "bar",
-                                        label: "Actual Generation (MWh)",
-                                        data: Object.values(m),
-                                        backgroundColor: "#4caf50",
-                                        order: 2
-                                    },
-                                    {
-                                        type: "line",
-                                        label: "Expected Generation (MWh)",
-                                        data: Object.keys(m).map(k => expectedGen[k] || 0),
-                                        borderColor: "#e74c3c",
-                                        backgroundColor: "#e74c3c",
-                                        borderWidth: 2,
-                                        pointRadius: 5,        // 🔴 balls
-                                        pointHoverRadius: 7,
-                                        pointBackgroundColor: "#fff",
-                                        pointBorderColor: "#e74c3c",
-                                        tension: 0.3,          // smooth curve
-                                        fill: false,
-                                        order: 1
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: false,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        display: true
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        title: {
-                                            display: true,
-                                            text: "Energy (MWh)"
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                
-                    // ================= PIE 1 : GENERATION =================
-                                // 🔢 Convert generation to % of total
-                            const totalGen = Object.values(pieGen).reduce((a, b) => a + b, 0);
-                            
-                            const pieGenPercent = {};
-                            Object.keys(pieGen).forEach(m => {
-                                pieGenPercent[m] = +((pieGen[m] / totalGen) * 100).toFixed(2);
-                            });
-                    pieChart1Obj = new Chart(pieChart1, {
-                        type: "pie",
-                        data: {
-                            labels: Object.keys(pieGenPercent),
-                            datasets: [{
-                                label: "Generation Contribution (%)",
-                                data: Object.values(pieGenPercent),
-                                backgroundColor: generateColors(Object.keys(pieGenPercent).length)
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: "Month-wise Generation Contribution (%)",
-                                    font: { size: 12, weight: "bold" }
-                                },
-                                legend: { display: false },
-                                    datalabels: {
-                                        color: "#fff",
-                                        font: {
-                                            size: 10,
-                                            weight: "bold"
-                                        },
-                                        anchor: "end",
-                                        align: "end",
-                                        offset: -60,
-                                        textAlign: "center",
-                                        rotation: (ctx) => {
-                                            const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
-                                            let angle = (meta.startAngle + meta.endAngle) / 2;
-                                            let deg = angle * (180 / Math.PI);
-                                    
-                                            if (deg > 90 && deg < 270) {
-                                                deg += 180;
-                                            }
-                                            return deg;
-                                        },
-                                        formatter: (value, ctx) =>
-                                            ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                    }     
-                            }
-                        },
-                        plugins: [ChartDataLabels]
-                    });
-                
-                    // ================= PIE 2 : AVG PR =================
-                    pieChart2Obj = new Chart(pieChart2, {
-                        type: "pie",
-                        data: {
-                            labels: Object.keys(piePR),
-                            datasets: [{
-                                label: "Average PR (%)",
-                                data: Object.values(piePR),
-                                backgroundColor: generateColors(Object.keys(piePR).length)
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: "Avarage PR %",
-                                    font: { size: 12, weight: "bold" },
-                                    padding: { top: 5, bottom: 5 }
-                                },
-                                legend: { display: false },
-                                    datalabels: {
-                                        color: "#fff",
-                                        font: {
-                                            size: 10,
-                                            weight: "bold"
-                                        },
-                                        anchor: "end",
-                                        align: "end",
-                                        offset: -60,
-                                        textAlign: "center",
-                                        rotation: (ctx) => {
-                                            const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
-                                            let angle = (meta.startAngle + meta.endAngle) / 2;
-                                            let deg = angle * (180 / Math.PI);
-                                    
-                                            if (deg > 90 && deg < 270) {
-                                                deg += 180;
-                                            }
-                                            return deg;
-                                        },
-                                        formatter: (value, ctx) =>
-                                            ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                    }
-                            }
-                        },
-                        plugins: [ChartDataLabels]
-                    });
-                
-                    // ================= PIE 3 : AVG CUF =================
-                    pieChart3Obj = new Chart(pieChart3, {
-                        type: "pie",
-                        data: {
-                            labels: Object.keys(pieCUF),
-                            datasets: [{
-                                label: "Average CUF (%)",
-                                data: Object.values(pieCUF),
-                                backgroundColor: generateColors(Object.keys(pieCUF).length)
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: "Avarage CUF %",
-                                    font: { size: 12, weight: "bold" },
-                                    padding: { top: 5, bottom: 5 }
-                                },
-                                legend: { display: false },
-                                        datalabels: {
-                                            color: "#fff",
-                                            font: {
-                                                size: 10,
-                                                weight: "bold"
-                                            },
-                                            anchor: "end",
-                                            align: "end",
-                                            offset: -60,
-                                            textAlign: "center",
-                                            rotation: (ctx) => {
-                                                const meta = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex];
-                                                let angle = (meta.startAngle + meta.endAngle) / 2;
-                                                let deg = angle * (180 / Math.PI);
-                                        
-                                                if (deg > 90 && deg < 270) {
-                                                    deg += 180;
-                                                }
-                                                return deg;
-                                            },
-                                            formatter: (value, ctx) =>
-                                                ctx.chart.data.labels[ctx.dataIndex] + "\n" + value + "%"
-                                        }
-                            }
-                        },
-                        plugins: [ChartDataLabels]
-                    });
-                }
-
-        function generateColors(n) {
-            const colors = [];
-            const palette = ["#f39c12", "#e74c3c", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#e67e22", "#95a5a6"];
-            for (let i = 0; i < n; i++) colors.push(palette[i % palette.length]);
-            return colors;
-        }
-    </script>
-
+let toastT;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show '+(type||'');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { t.className=''; }, 2800);
+}
+</script>
 </body>
-
 </html>
-
-
-
-
-
