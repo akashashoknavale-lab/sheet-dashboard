@@ -367,10 +367,12 @@ function parseTimestamp(raw) {
 
 // ── Generic CSV fetch + parse for one day's file ──
 async function fetchDayCSV(compactDate) {
-  const url = DATA_URL + '&date=' + compactDate + '&_nc=' + Date.now();
-  const r = await fetch(url);
+  const url = DATA_URL + '?date=' + compactDate + '&_nc=' + Date.now();
+  const r = await fetch(url, { cache: 'no-store' });
   if(!r.ok) throw new Error('HTTP '+r.status);
   const text = await r.text();
+  console.log('[fetchDayCSV] requested date=', compactDate, ' url=', url);
+  console.log('[fetchDayCSV] first 200 chars of response:', text.substring(0,200));
   return parseCSVToRows(text);
 }
 
