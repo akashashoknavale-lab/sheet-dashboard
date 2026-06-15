@@ -134,7 +134,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
     <div class="topbar-title" id="page-title">Dashboard Overview</div>
     <div class="topbar-right">
       <div class="topbar-time" id="clock">—</div>
-      <button class="ref-btn" onclick="fetchData()">⟳ Refresh</button>
+      <button class="ref-btn" onclick="fetchLiveData()">⟳ Refresh</button>
     </div>
   </div>
 
@@ -200,7 +200,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
             <thead><tr>
               <th>Device</th><th>Vin (V)</th><th>Iin (A)</th><th>Win (kW)</th>
               <th>Day Gen</th><th>Total Gen</th><th>Temp (°C)</th>
-              <th>MPPT1th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>Status</th>
+              <th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>Status</th>
             </tr></thead>
             <tbody id="inv-live-body"><tr><td colspan="13" class="pm">Loading...</td></tr></tbody>
           </table>
@@ -236,11 +236,11 @@ tr:hover td{background:rgba(246,201,14,.03);}
               <option value="ALL">All MFM</option>
             </select>
             <label>Date</label>
-            <input type="date" id="mfm-date-filter" onchange="renderMfmDay()"/>
+            <input type="date" id="mfm-date-filter" onchange="onDateChange('mfm')"/>
             <span class="filter-count" id="mfm-row-count"></span>
           </div>
           <div class="dc">
-            <div class="dc-hdr">MFM — <span>Day Data (5-min intervals)</span></div>
+            <div class="dc-hdr">MFM — <span id="mfm-day-title">Day Data</span></div>
             <div class="tw-tall">
               <table>
                 <thead><tr>
@@ -274,11 +274,11 @@ tr:hover td{background:rgba(246,201,14,.03);}
               <option value="ALL">All Inverters</option>
             </select>
             <label>Date</label>
-            <input type="date" id="inv-date-filter" onchange="renderInvDay()"/>
+            <input type="date" id="inv-date-filter" onchange="onDateChange('inv')"/>
             <span class="filter-count" id="inv-row-count"></span>
           </div>
           <div class="dc">
-            <div class="dc-hdr">Inverter — <span>Day Data (5-min intervals)</span></div>
+            <div class="dc-hdr">Inverter — <span id="inv-day-title">Day Data</span></div>
             <div class="tw-tall">
               <table>
                 <thead><tr>
@@ -302,10 +302,11 @@ tr:hover td{background:rgba(246,201,14,.03);}
 </div>
 
 <script>
+// Base Apps Script Web App URL (doGet). We append &date=YYYYMMDD for historical data.
 const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSZOBtMJNZc3UXC8A1tFiv2gHr8mv_SNDFFjfN1bILLpIeL70JyECYRIEJ8yErMvjXO7rKAw4OfxdcMjritYp8_VMs3P_nESIHZ89AY4GYXW-L8zJ-e4Dzp-mD38ukB1DMl3Ew2U5lOI_tW6YRaStwiLV3n2zBziGBwXiM3KvoLr0geEIi2t5tfValxSwB7WwuPsEkg8E7JuwT1PSiga6Yinpmn3fOy8ogiEK03ng0igem7Vv9p-05X7-N5jF2Vr4w3CbizdWfOwP4zmjc9eXubRJu9-Q&lib=MJ5HZeqMKRWvhcsmOGO96nZHe6fVZ7h-Z";
 const REFRESH = 5*60*1000;
 
-// Column indices
+// Column indices (matches CSV header order)
 const C = {
   ts:0,company:1,site:2,name:3,type:4,
   vr:5,vy:6,vb:7,ir:8,iy:9,ib:10,
@@ -316,82 +317,115 @@ const C = {
 };
 
 let chart = null;
-// All historical rows stored here
-let allMfmRows = [];  // { dateStr, timeStr, row }
-let allInvRows = [];
+
+// Cache: { 'YYYYMMDD': { mfm: [...rows], inv: [...rows] } }
+const dayCache = {};
 
 window.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     document.getElementById('clock').textContent =
       new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'});
   }, 1000);
+
   // Set today's date as default in both date pickers
-  const today = todayStr();
+  const today = todayStrISO();
   document.getElementById('mfm-date-filter').value = today;
   document.getElementById('inv-date-filter').value = today;
+  document.getElementById('mfm-date-filter').max = today;
+  document.getElementById('inv-date-filter').max = today;
+
   initChart();
-  fetchData();
-  setInterval(fetchData, REFRESH);
+  fetchLiveData();                 // live dashboard cards/tables
+  loadDayData('mfm', today, true); // initial day-table loads (today)
+  loadDayData('inv', today, true);
+  setInterval(fetchLiveData, REFRESH);
 });
 
-function todayStr() {
+// ── Date helpers ──
+function todayStrISO() {
   const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-
-// Parse "12-06-2026" → "2026-06-12" for date input comparison
-function normDate(raw) {
-  if(!raw) return '';
-  // format dd-mm-yyyy → yyyy-mm-dd
-  const m = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if(m) return m[3]+'-'+m[2]+'-'+m[1];
-  // already yyyy-mm-dd
-  if(/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.substring(0,10);
-  return raw;
+// 'YYYY-MM-DD' -> 'YYYYMMDD'
+function isoToCompact(iso) {
+  return iso.replace(/-/g,'');
 }
 
-// ── FETCH ──
-async function fetchData() {
+// Parse a Timestamp cell that can be either:
+//   "DD-MM-YYYY HH:mm"   e.g. 11-06-2026 10:16
+//   "YYYY-MM-DD HH:mm"   e.g. 2026-06-11 14:36
+// Returns { iso: 'YYYY-MM-DD', time: 'HH:mm', display: original }
+function parseTimestamp(raw) {
+  if(!raw) return null;
+  const t = raw.trim();
+  let m = t.match(/^(\d{2})-(\d{2})-(\d{4})[ T](\d{2}:\d{2})/); // DD-MM-YYYY HH:mm
+  if(m) return { iso: m[3]+'-'+m[2]+'-'+m[1], time: m[4], display: t };
+  m = t.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2})/);     // YYYY-MM-DD HH:mm
+  if(m) return { iso: m[1]+'-'+m[2]+'-'+m[3], time: m[4], display: t };
+  return null;
+}
+
+// ── Generic CSV fetch + parse for one day's file ──
+async function fetchDayCSV(compactDate) {
+  const url = DATA_URL + '&date=' + compactDate + '&_nc=' + Date.now();
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const text = await r.text();
+  return parseCSVToRows(text);
+}
+
+// Parse CSV text -> { mfm:[cols...], inv:[cols...] } (skips header / "No CSV Found" etc.)
+function parseCSVToRows(raw) {
+  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
+  const mfm = [], inv = [];
+
+  for(const l of lines) {
+    if(l.startsWith('Timestamp')) continue;       // header row
+    if(/^No CSV Found/i.test(l)) continue;        // backend error message
+    if(/^Invalid date/i.test(l)) continue;
+    const cols = l.split(',');
+    if(cols.length < 6) continue;
+    const type = (cols[C.type]||'').trim().toUpperCase();
+    if(type === 'MFM') mfm.push(cols);
+    else if(type === 'INVERTER') inv.push(cols);
+  }
+  return { mfm, inv };
+}
+
+// ── LIVE dashboard fetch (today's file, used for cards + live tables + chart) ──
+async function fetchLiveData() {
   setStatus('loading','...');
   try {
-    const r = await fetch(DATA_URL + '&_nc='+Date.now());
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const text = await r.text();
-    processCSV(text);
+    const today = isoToCompact(todayStrISO());
+    const parsed = await fetchDayCSV(today);
+
+    // cache today's data too, so the Day-Data table for "today" stays in sync
+    dayCache[today] = parsed;
+
+    renderLiveFromParsed(parsed);
+
     const ts = new Date().toLocaleTimeString('en-IN');
     setStatus('ok','✅ Updated: '+ts);
     document.getElementById('sb-ts').textContent = 'Last: '+ts;
+
+    // If the day-table is currently showing "today", refresh it too
+    const mfmDate = document.getElementById('mfm-date-filter').value;
+    const invDate = document.getElementById('inv-date-filter').value;
+    if(mfmDate === todayStrISO()) renderMfmDay();
+    if(invDate === todayStrISO()) renderInvDay();
+
   } catch(e) {
     setStatus('err','❌ '+e.message);
   }
 }
 
-function processCSV(raw) {
-  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
-  const dataRows = [];
-  let currentDate = '';
-
-  for(let i=0;i<lines.length;i++) {
-    const l = lines[i];
-    if(l.startsWith('Timestamp')) continue; // header
-    if(/^\d{2}-\d{2}-\d{4}$/.test(l)) { currentDate = l; continue; } // date line
-    if(l.length > 10) {
-      const cols = l.split(',');
-      if(cols.length >= 5) dataRows.push({ dateStr: currentDate, cols });
-    }
-  }
-
-  const mfm = dataRows.filter(d=>(d.cols[C.type]||'').trim().toUpperCase()==='MFM');
-  const inv = dataRows.filter(d=>(d.cols[C.type]||'').trim().toUpperCase()==='INVERTER');
-
-  // ── Live data = latest snapshot per device ──
-  // Group by device name, keep last occurrence
-  const latestMfm = latestPerDevice(mfm);
-  const latestInv = latestPerDevice(inv);
+function renderLiveFromParsed(parsed) {
+  const latestMfm = latestPerDevice(parsed.mfm);
+  const latestInv = latestPerDevice(parsed.inv);
 
   // ── Cards from latest MFM ──
   let totalKW=0, totalEkwh=0;
-  latestMfm.forEach(({cols:r})=>{
+  latestMfm.forEach(r=>{
     const kw = parseFloat(r[C.w]||0);
     const kwh = parseFloat(r[C.ekwh]||0);
     if(kw>0) totalKW+=kw;
@@ -401,81 +435,93 @@ function processCSV(raw) {
   document.getElementById('c-kwh').textContent = totalEkwh ? scaleKWh(totalEkwh) : '—';
 
   // Timestamp
-  const lastTs = latestMfm.length ? (latestMfm[latestMfm.length-1].cols[C.ts]||'') : '';
+  const lastTs = latestMfm.length ? (latestMfm[latestMfm.length-1][C.ts]||'') : '';
   document.getElementById('mfm-ts').textContent = lastTs ? '  '+lastTs : '';
   document.getElementById('inv-ts').textContent = lastTs ? '  '+lastTs : '';
 
   // ── Live MFM table ──
   const mb = document.getElementById('mfm-live-body');
   mb.innerHTML = latestMfm.length
-    ? latestMfm.map(({cols:r})=>mfmRow(r)).join('')
+    ? latestMfm.map(r=>mfmRow(r)).join('')
     : '<tr><td colspan="15" class="pm">MFM डेटा नाही</td></tr>';
 
   // ── Live Inverter table ──
   const ib = document.getElementById('inv-live-body');
   ib.innerHTML = latestInv.length
-    ? latestInv.map(({cols:r})=>invRow(r)).join('')
+    ? latestInv.map(r=>invRow(r)).join('')
     : '<tr><td colspan="13" class="pm">Inverter डेटा नाही</td></tr>';
 
-  if(latestInv.length) updateChart(latestInv.map(d=>d.cols));
-
-  // ── Store history ──
-  // Merge new rows into allMfmRows / allInvRows (avoid duplicates by ts+name)
-  mergeHistory(allMfmRows, mfm);
-  mergeHistory(allInvRows, inv);
-
-  // ── Populate device dropdowns ──
-  populateDropdown('mfm-dev-filter', allMfmRows, 'All MFM');
-  populateDropdown('inv-dev-filter', allInvRows, 'All Inverters');
-
-  // ── Render day tables ──
-  renderMfmDay();
-  renderInvDay();
+  if(latestInv.length) updateChart(latestInv);
 }
 
 function latestPerDevice(rows) {
   const map = new Map();
-  rows.forEach(d => {
-    const name = d.cols[C.name]||'';
-    map.set(name, d);
+  rows.forEach(r => {
+    const name = r[C.name]||'';
+    map.set(name, r);
   });
   return [...map.values()];
 }
 
-function mergeHistory(store, newRows) {
-  newRows.forEach(d => {
-    const key = (d.cols[C.ts]||'')+'|'+(d.cols[C.name]||'')+'|'+(d.dateStr||'');
-    if(!store.find(x=>x.key===key)) {
-      store.push({key, dateStr: d.dateStr, cols: d.cols});
-    }
-  });
+// ── Day-table date change handler ──
+async function onDateChange(kind) {
+  const iso = document.getElementById(kind+'-date-filter').value;
+  if(!iso) return;
+  await loadDayData(kind, iso, false);
 }
 
-function populateDropdown(id, store, allLabel) {
+// Loads (from cache or fetch) the data for the given ISO date for mfm/inv day-table, then renders.
+async function loadDayData(kind, iso, isInitial) {
+  const compact = isoToCompact(iso);
+  const bodyId = kind === 'mfm' ? 'mfm-day-body' : 'inv-day-body';
+  const colspan = kind === 'mfm' ? 16 : 14;
+
+  if(!dayCache[compact]) {
+    document.getElementById(bodyId).innerHTML =
+      `<tr><td colspan="${colspan}" class="pm"><span class="spin"></span> डेटा लोड होत आहे...</td></tr>`;
+    try {
+      dayCache[compact] = await fetchDayCSV(compact);
+    } catch(err) {
+      document.getElementById(bodyId).innerHTML =
+        `<tr><td colspan="${colspan}" class="pm">❌ Error: ${err.message}</td></tr>`;
+      return;
+    }
+  }
+
+  // populate device dropdown from this day's data
+  populateDropdown(kind+'-dev-filter', dayCache[compact][kind]);
+
+  if(kind === 'mfm') renderMfmDay(); else renderInvDay();
+}
+
+function populateDropdown(id, rows) {
   const sel = document.getElementById(id);
   const current = sel.value;
-  const devices = [...new Set(store.map(d=>d.cols[C.name]||''))].filter(Boolean).sort();
+  const allLabel = id.startsWith('mfm') ? 'All MFM' : 'All Inverters';
+  const devices = [...new Set(rows.map(r=>r[C.name]||''))].filter(Boolean).sort();
   sel.innerHTML = `<option value="ALL">${allLabel}</option>`
     + devices.map(d=>`<option value="${d}">${d}</option>`).join('');
   if(devices.includes(current)) sel.value = current;
 }
 
-// ── Day table renderers ──
+// ── Day table renderers (read from dayCache for the selected date) ──
 function renderMfmDay() {
+  const iso = document.getElementById('mfm-date-filter').value;
+  const compact = isoToCompact(iso);
   const dev = document.getElementById('mfm-dev-filter').value;
-  const date = document.getElementById('mfm-date-filter').value; // yyyy-mm-dd
-  const filtered = allMfmRows.filter(d => {
-    const devOk = dev==='ALL' || (d.cols[C.name]||'')=== dev;
-    const dateOk = !date || normDate(d.dateStr)===date || normDate(d.cols[C.ts])===date;
-    return devOk && dateOk;
-  });
-  // Sort by timestamp asc
-  filtered.sort((a,b)=>(a.cols[C.ts]||'').localeCompare(b.cols[C.ts]||''));
+  const data = dayCache[compact];
+  const rows = data ? data.mfm : [];
+
+  const filtered = rows.filter(r => dev==='ALL' || (r[C.name]||'')===dev);
+  filtered.sort((a,b)=>(a[C.ts]||'').localeCompare(b[C.ts]||''));
 
   document.getElementById('mfm-row-count').textContent = filtered.length+' records';
+  document.getElementById('mfm-day-title').textContent =
+    'Day Data — ' + formatDisplayDate(iso) + (iso===todayStrISO() ? ' (Today, 5-min intervals)' : '');
+
   const body = document.getElementById('mfm-day-body');
   body.innerHTML = filtered.length
-    ? filtered.map(({cols:r})=>`<tr>
+    ? filtered.map(r=>`<tr>
         <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>
         <td>${n(r[C.vr])}</td><td>${n(r[C.vy])}</td><td>${n(r[C.vb])}</td>
         <td>${n(r[C.ir])}</td><td>${n(r[C.iy])}</td><td>${n(r[C.ib])}</td>
@@ -485,23 +531,26 @@ function renderMfmDay() {
         <td>${n(r[C.ikwh])}</td><td>${n(r[C.ekwh])}</td>
         <td>${r[C.status]||'—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="16" class="pm">या filter साठी डेटा नाही</td></tr>';
+    : `<tr><td colspan="16" class="pm">${data ? 'या filter साठी डेटा नाही' : 'डेटा उपलब्ध नाही'}</td></tr>`;
 }
 
 function renderInvDay() {
+  const iso = document.getElementById('inv-date-filter').value;
+  const compact = isoToCompact(iso);
   const dev = document.getElementById('inv-dev-filter').value;
-  const date = document.getElementById('inv-date-filter').value;
-  const filtered = allInvRows.filter(d => {
-    const devOk = dev==='ALL' || (d.cols[C.name]||'')=== dev;
-    const dateOk = !date || normDate(d.dateStr)===date || normDate(d.cols[C.ts])===date;
-    return devOk && dateOk;
-  });
-  filtered.sort((a,b)=>(a.cols[C.ts]||'').localeCompare(b.cols[C.ts]||''));
+  const data = dayCache[compact];
+  const rows = data ? data.inv : [];
+
+  const filtered = rows.filter(r => dev==='ALL' || (r[C.name]||'')===dev);
+  filtered.sort((a,b)=>(a[C.ts]||'').localeCompare(b[C.ts]||''));
 
   document.getElementById('inv-row-count').textContent = filtered.length+' records';
+  document.getElementById('inv-day-title').textContent =
+    'Day Data — ' + formatDisplayDate(iso) + (iso===todayStrISO() ? ' (Today, 5-min intervals)' : '');
+
   const body = document.getElementById('inv-day-body');
   body.innerHTML = filtered.length
-    ? filtered.map(({cols:r})=>`<tr>
+    ? filtered.map(r=>`<tr>
         <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>
         <td>${n(r[C.vin])}</td><td>${n(r[C.iin])}</td>
         <td class="${parseFloat(r[C.win]||0)>0?'pos':''}">${n(r[C.win])}</td>
@@ -510,10 +559,16 @@ function renderInvDay() {
         <td>${n(r[C.mv3])}</td><td>${n(r[C.mv4])}</td><td>${n(r[C.mv5])}</td>
         <td>${r[C.status]||'—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="14" class="pm">या filter साठी डेटा नाही</td></tr>';
+    : `<tr><td colspan="14" class="pm">${data ? 'या filter साठी डेटा नाही' : 'डेटा उपलब्ध नाही'}</td></tr>`;
 }
 
-// ── Row builders ──
+function formatDisplayDate(iso) {
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return d+'-'+m+'-'+y;
+}
+
+// ── Row builders (live tables) ──
 function mfmRow(r) {
   const kw=parseFloat(r[C.w]||0);
   return `<tr>
