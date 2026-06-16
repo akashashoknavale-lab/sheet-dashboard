@@ -43,7 +43,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .view{display:none;flex-direction:column;gap:14px;}
 .view.active{display:flex;}
 
-/* DL BTN STYLES */
+/* BUTTONS */
 .dl-btn {background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:var(--acc2);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;margin-left:5px;font-weight:600;}
 .dl-btn:hover {background:rgba(56,189,248,.22);}
 .dl-btn.pdf-btn {background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:var(--red);}
@@ -110,67 +110,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
 .chart-title b{color:var(--txt);}
 .chart-wrap{position:relative;height:190px;}
 
-/* SETTINGS PANEL */
-.settings-section{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:4px;}
-.settings-section-hdr{
-  padding:11px 16px;border-bottom:1px solid var(--border);
-  font-size:12px;font-weight:700;color:var(--acc);
-  display:flex;align-items:center;justify-content:space-between;
-  cursor:pointer;user-select:none;
-}
-.settings-section-hdr:hover{background:rgba(246,201,14,.04);}
-.settings-section-body{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
-.settings-section-body.collapsed{display:none;}
-
-.dev-toggle-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 12px;border-radius:8px;border:1px solid var(--border);
-  background:#1a2235;transition:background .15s;
-}
-.dev-toggle-row:hover{background:#1e2840;}
-.dev-toggle-info{display:flex;flex-direction:column;gap:2px;}
-.dev-toggle-name{font-size:12px;font-weight:600;color:var(--txt);}
-.dev-toggle-meta{font-size:10px;color:var(--mut);}
-
-.toggle-wrap{display:flex;align-items:center;gap:8px;}
-.toggle-label{font-size:10px;color:var(--mut);min-width:36px;text-align:right;}
-.toggle{position:relative;width:38px;height:20px;flex-shrink:0;}
-.toggle input{opacity:0;width:0;height:0;}
-.toggle-slider{
-  position:absolute;cursor:pointer;inset:0;
-  background:#2d3748;border-radius:20px;transition:.2s;
-}
-.toggle-slider::before{
-  content:'';position:absolute;
-  height:14px;width:14px;left:3px;bottom:3px;
-  background:#94a3b8;border-radius:50%;transition:.2s;
-}
-.toggle input:checked + .toggle-slider{background:var(--grn);}
-.toggle input:checked + .toggle-slider::before{transform:translateX(18px);background:#fff;}
-
-.smb-settings-inv-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-.smb-settings-inv-row select{
-  background:#1a2235;border:1px solid var(--border);color:var(--txt);
-  padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;outline:none;
-}
-.smb-string-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px;}
-.smb-string-row{
-  display:flex;align-items:center;gap:8px;
-  background:#1a2235;border:1px solid var(--border);border-radius:8px;padding:7px 10px;
-}
-.smb-string-key{font-size:10px;color:var(--mut);min-width:28px;font-weight:700;}
-.smb-string-input{
-  flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
-  color:var(--txt);font-size:11px;padding:2px 4px;outline:none;
-}
-.smb-string-input:focus{border-bottom-color:var(--acc2);}
-
-.settings-info{
-  background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);
-  border-radius:8px;padding:10px 14px;font-size:11px;color:#7dd3fc;
-  display:flex;align-items:center;gap:8px;
-}
-
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 </style>
@@ -194,8 +133,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
   <div class="sb-sec">SMB Tabular</div>
   <div class="sb-sub" id="sl-smb-day" onclick="openTabular('smb','day')">📅 Day Data</div>
   <div class="sb-sub" id="sl-smb-rep" onclick="openTabular('smb','report')">📁 Reports</div>
-  <div class="sb-sec">Configuration</div>
-  <div class="sb-item" id="nav-settings" onclick="goSettings()">⚙️ Settings</div>
   <div class="sb-footer">
     <span class="dot"></span>Auto-refresh: 5 min<br>
     <span id="sb-ts" style="font-size:9px;opacity:.7;">—</span>
@@ -213,6 +150,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
   <div id="content">
 
+    <!-- DASHBOARD VIEW -->
     <div class="view active" id="view-dash">
       <div class="sbar" id="sbar"><span class="spin"></span> Loading...</div>
       <div class="cards-row">
@@ -248,6 +186,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <button class="tab-btn" id="dtab-smb" onclick="switchDash('smb')">🔲 SMB Data</button>
       </div>
 
+      <!-- MFM live -->
       <div class="dc" id="dp-mfm">
         <div class="dc-hdr">MFM — <span>Live Reading</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
@@ -263,6 +202,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
+      <!-- Inverter live -->
       <div class="dc" id="dp-inv" style="display:none">
         <div class="dc-hdr">Inverters — <span>Live Reading</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
@@ -277,6 +217,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
+      <!-- SMB live -->
       <div class="dc" id="dp-smb" style="display:none">
         <div class="dc-hdr">SMB — <span>Live Reading (per Inverter, S1–S32)</span><span id="smb-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div style="padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);">
@@ -299,6 +240,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
       </div>
     </div>
 
+    <!-- TABULAR VIEW -->
     <div class="view" id="view-tab">
       <div class="itab-row">
         <button class="itab active" id="tt-mfm" onclick="switchTabMain('mfm')">⚡ MFM</button>
@@ -306,6 +248,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <button class="itab" id="tt-smb" onclick="switchTabMain('smb')">🔲 SMB</button>
       </div>
 
+      <!-- MFM Tabular -->
       <div id="tp-mfm">
         <div class="itab-row">
           <button class="itab active" id="tm-day" onclick="switchTabSub('mfm','day')">📅 Day Data</button>
@@ -342,6 +285,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
+      <!-- Inverter Tabular -->
       <div id="tp-inv" style="display:none">
         <div class="itab-row">
           <button class="itab active" id="ti-day" onclick="switchTabSub('inv','day')">📅 Day Data</button>
@@ -377,6 +321,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
+      <!-- SMB Tabular -->
       <div id="tp-smb" style="display:none">
         <div class="itab-row">
           <button class="itab active" id="ts-day" onclick="switchTabSub('smb','day')">📅 Day Data</button>
@@ -408,123 +353,65 @@ tr:hover td{background:rgba(246,201,14,.03);}
       </div>
     </div>
 
-    <div class="view" id="view-settings">
-      <div class="settings-info">
-        💾 सर्व settings आपोआप browser मध्ये save होतात — refresh / reload केल्यावर तसेच राहतात. दुसऱ्या browser / device वर नाही.
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-hdr" onclick="toggleSection('sec-mfm')">
-          ⚡ MFM Devices — Enable / Disable
-          <span style="font-size:10px;color:var(--mut);" id="mfm-sec-count"></span>
-        </div>
-        <div class="settings-section-body" id="sec-mfm">
-          <div id="mfm-toggle-list" style="display:flex;flex-direction:column;gap:7px;">
-            <div class="pm">डेटा लोड होत आहे...</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-hdr" onclick="toggleSection('sec-inv')">
-          🔌 Inverter Devices — Enable / Disable
-          <span style="font-size:10px;color:var(--mut);" id="inv-sec-count"></span>
-        </div>
-        <div class="settings-section-body" id="sec-inv">
-          <div id="inv-toggle-list" style="display:flex;flex-direction:column;gap:7px;">
-            <div class="pm">डेटा लोड होत आहे...</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-hdr" onclick="toggleSection('sec-smb')">
-          🔲 SMB Strings — Rename &amp; Enable / Disable
-          <span style="font-size:10px;color:var(--mut);">per Inverter</span>
-        </div>
-        <div class="settings-section-body" id="sec-smb">
-          <div class="smb-settings-inv-row">
-            <label style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;">Inverter निवडा</label>
-            <select id="smb-settings-inv-sel" onchange="renderSmbSettingsPanel()">
-              <option value="">— Select Inverter —</option>
-            </select>
-            <button class="ref-btn" style="font-size:10px;padding:5px 10px;" onclick="resetSmbStrings()">↺ Reset Names</button>
-          </div>
-          <div id="smb-string-panel"><div class="pm">Inverter निवडा</div></div>
-        </div>
-      </div>
-
-      <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-        <button onclick="resetAllSettings()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:8px 18px;border-radius:8px;font-size:11px;cursor:pointer;">
-          🗑 सर्व Settings Reset करा
-        </button>
-      </div>
-    </div>
-
   </div>
 </div>
 
 <script>
-/* STORAGE KEYS */
-const LS_MFM_DISABLED  = 'solar_disabled_mfm';
-const LS_INV_DISABLED  = 'solar_disabled_inv';
-const LS_SMB_DISABLED  = 'solar_disabled_smb';
-const LS_SMB_SETTINGS  = 'solar_smb_settings';
+// ==========================================
+// EXAMPLE 1: MFM किंवा Inverter पूर्ण बंद करणे
+// ==========================================
+// जर तुला एखादा इनव्हरटर किंवा MFM पूर्ण फिल्टर करायचा (काढून टाकायचा) असेल, 
+// तर खालील यादीत (Set मध्ये) त्याचे अचूक नाव टाईप कर.
+const HARDCODED_DISABLED = {
+  mfm: new Set(['PHT4', 'PHT5'
+    // 'MFM_02', 'MFM_04' <-- इथे नावे टाकू शकता
+  ]),
+  inv: new Set(['BIL_3'
+    // 'Inverter_05', 'Inverter_08' <-- इथे नावे टाकू शकता
+  ])
+};
 
-function loadDisabledSets() {
-  function loadArr(key) {
-    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : []; }
-    catch(e) { return []; }
-  }
-  return {
-    mfm: new Set(loadArr(LS_MFM_DISABLED)),
-    inv: new Set(loadArr(LS_INV_DISABLED)),
-    smb: new Set(loadArr(LS_SMB_DISABLED))
-  };
-}
-
-function saveDisabledMfm(arr) {
-  localStorage.setItem(LS_MFM_DISABLED, JSON.stringify(arr));
-  DISABLED_SETS.mfm = new Set(arr);
-}
-function saveDisabledInv(arr) {
-  localStorage.setItem(LS_INV_DISABLED, JSON.stringify(arr));
-  DISABLED_SETS.inv = new Set(arr);
-}
-
-let DISABLED_SETS = loadDisabledSets();
-
-function isMfmEnabled(name)         { return !DISABLED_SETS.mfm.has(name); }
-function isInvEnabled(name)         { return !DISABLED_SETS.inv.has(name); }
-function isSmbEnabledForInv(name)   { return !DISABLED_SETS.smb.has(name); }
+function isMfmEnabled(name) { return !HARDCODED_DISABLED.mfm.has(name); }
+function isInvEnabled(name) { return !HARDCODED_DISABLED.inv.has(name); }
 
 let smbSettings = {};
-function smbStoreLoad() {
-  try {
-    const raw = localStorage.getItem(LS_SMB_SETTINGS);
-    if(raw) smbSettings = JSON.parse(raw);
-  } catch(e) { smbSettings = {}; }
-}
-function smbStoreSave() {
-  try { localStorage.setItem(LS_SMB_SETTINGS, JSON.stringify(smbSettings)); } catch(e) {}
-}
-
-const SMB_CONFIG = {
-  "INV_1": {
-    s1:{name:"akash",enabled:true},
-    s2:{name:"String-2",enabled:false},
-    s3:{name:"String-3",enabled:false}
-  }
-  "INV_2": {
-    s1:{name:"dev",enabled:true},
-    s2:{name:"String-2",enabled:true},
-    s3:{name:"String-3",enabled:false}
-  }
-};
 const SMB_KEYS = [];
 for(let i=1;i<=32;i++) SMB_KEYS.push('s'+i);
-
 function smbDefaultEntry(sKey) { return { name: sKey.toUpperCase(), enabled: true }; }
+
+// ==========================================
+// EXAMPLE 2: SMB स्ट्रिंग्स बंद करणे किंवा नावे बदलणे
+// ==========================================
+function loadHardcodedSmbSettings() {
+   smbSettings['BIL_1'] = {};
+  SMB_KEYS.forEach(k => { smbSettings['BIL_1'][k] = smbDefaultEntry(k); }); // सर्व डिफॉल्ट चालू केले
+  smbSettings['BIL_1']['s1'].name = "Zone_A";   // नाव बदलले
+  smbSettings['BIL_1']['s3'].enabled = false;   // S3
+  smbSettings['BIL_1']['s4'].enabled = false; 
+
+   smbSettings['BIL_2'] = {};
+  SMB_KEYS.forEach(k => { smbSettings['BIL_2'][k] = smbDefaultEntry(k); }); // सर्व डिफॉल्ट चालू केले
+  smbSettings['BIL_2']['s1'].name = "Zone_B";   // नाव बदलले
+  smbSettings['BIL_2']['s5'].enabled = false;   // S3
+  smbSettings['BIL_2']['s4'].enabled = false; 
+
+
+  // उदाहरण अ: समजा 'Inverter_01' च्या S3 आणि S4 स्ट्रिंग्स बंद करायच्या आहेत आणि S1 चे नाव 'Zone_A' करायचे आहे:
+  /*
+  smbSettings['Inverter_01'] = {};
+  SMB_KEYS.forEach(k => { smbSettings['Inverter_01'][k] = smbDefaultEntry(k); }); // सर्व डिफॉल्ट चालू केले
+  smbSettings['Inverter_01']['s1'].name = "Zone_A";   // नाव बदलले
+  smbSettings['Inverter_01']['s3'].enabled = false;   // S3 बंद (फिल्टर होईल)
+  smbSettings['Inverter_01']['s4'].enabled = false;   // S4 बंद (फिल्टर होईल)
+  */
+
+  // उदाहरण ब: समजा 'Inverter_02' ची S10 स्ट्रिंग बंद करायची आहे:
+  /*
+  smbSettings['Inverter_02'] = {};
+  SMB_KEYS.forEach(k => { smbSettings['Inverter_02'][k] = smbDefaultEntry(k); });
+  smbSettings['Inverter_02']['s10'].enabled = false;  // S10 बंद केली
+  */
+}
 
 function smbGetInverterSettings(invName) {
   if(!smbSettings[invName]) {
@@ -533,17 +420,6 @@ function smbGetInverterSettings(invName) {
     smbSettings[invName] = obj;
   }
   return smbSettings[invName];
-}
-function smbGetSetting(invName, sKey) {
-  if (SMB_CONFIG[invName] && SMB_CONFIG[invName][sKey]) {
-    return SMB_CONFIG[invName][sKey];
-  }
-  return { name: sKey.toUpperCase(), enabled: true };
-}
-function smbSetSetting(invName, sKey, patch) {
-  const inv = smbGetInverterSettings(invName);
-  inv[sKey] = Object.assign({}, inv[sKey] || smbDefaultEntry(sKey), patch);
-  smbStoreSave();
 }
 
 let knownMfmDevices = [];
@@ -574,11 +450,9 @@ function parseCSVToRows(raw) {
   const mfm = [], inv = [];
   for(const l of lines) {
     if(l.startsWith('Timestamp')) continue;
-    if(/^No CSV Found/i.test(l)||/^Invalid date/i.test(l)) continue;
     const cols = l.split(',');
     if(cols.length < 6) continue;
     const type = (cols[C.type]||'').trim().toUpperCase();
-    const name = (cols[C.name]||'').trim();
     if(type === 'MFM') mfm.push(cols);
     else if(type === 'INVERTER') inv.push(cols);
   }
@@ -589,15 +463,29 @@ function updateKnownDevices(parsed) {
   const mfmNames = [...new Set(parsed.mfm.map(r=>r[C.name]||'').filter(Boolean))].sort();
   const invNames = [...new Set(parsed.inv.map(r=>r[C.name]||'').filter(Boolean))].sort();
   let changed = false;
-  mfmNames.forEach(n => { if(!knownMfmDevices.includes(n)){ knownMfmDevices.push(n); changed=true; }});
-  invNames.forEach(n => { if(!knownInvDevices.includes(n)){ knownInvDevices.push(n); changed=true; }});
-  knownMfmDevices.sort(); knownInvDevices.sort();
+  
+  mfmNames.forEach(n => { if(isMfmEnabled(n) && !knownMfmDevices.includes(n)){ knownMfmDevices.push(n); changed=true; }});
+  invNames.forEach(n => { if(isInvEnabled(n) && !knownInvDevices.includes(n)){ knownInvDevices.push(n); changed=true; }});
+  
   if(changed) {
-    renderMfmToggles(); renderInvToggles();
-    populateInverterSelect('smb-settings-inv-sel', knownInvDevices.filter(isSmbEnabledForInv).map(n=>({name:n})));
-    populateInverterSelect('smb-live-inv-select', knownInvDevices.filter(isSmbEnabledForInv).map(n=>({name:n})));
-    populateInverterSelect('smb-dev-filter', knownInvDevices.filter(isSmbEnabledForInv).map(n=>({name:n})));
+    knownMfmDevices.sort(); knownInvDevices.sort();
+    
+    populateDropdown('mfm-dev-filter', knownMfmDevices, 'ALL', 'All MFM');
+    populateDropdown('inv-dev-filter', knownInvDevices, 'ALL', 'All Inverters');
+    
+    populateDropdown('smb-live-inv-select', knownInvDevices);
+    populateDropdown('smb-dev-filter', knownInvDevices, '', '— Select Inverter —');
   }
+}
+
+function populateDropdown(id, list, defaultVal = null, defaultText = '') {
+  const sel = document.getElementById(id); if(!sel) return;
+  const oldVal = sel.value;
+  let html = defaultVal !== null ? `<option value="${defaultVal}">${defaultText}</option>` : '';
+  list.forEach(x => { html += `<option value="${x}">${x}</option>`; });
+  sel.innerHTML = html;
+  if(oldVal && list.includes(oldVal)) { sel.value = oldVal; } 
+  else if(defaultVal !== null) { sel.value = defaultVal; }
 }
 
 async function fetchDayCSV(compactDate) {
@@ -621,9 +509,7 @@ async function fetchLiveData() {
     if(document.getElementById('mfm-date-filter').value === todayStrISO()) renderMfmDay();
     if(document.getElementById('inv-date-filter').value === todayStrISO()) renderInvDay();
     if(document.getElementById('smb-date-filter').value === todayStrISO()) renderSmbDay();
-  } catch(e) {
-    setStatus('err','❌ '+e.message);
-  }
+  } catch(e) { setStatus('err','❌ '+e.message); }
 }
 
 function renderLiveFromParsed(parsed) {
@@ -636,9 +522,9 @@ function renderLiveFromParsed(parsed) {
   document.getElementById('c-kw').textContent = totalKW ? scaleKW(totalKW) : '—';
   document.getElementById('c-kwh').textContent = totalEkwh ? scaleKWh(totalEkwh): '—';
   const lastTs = latestMfm.length ? (latestMfm[latestMfm.length-1][C.ts]||'') : '';
-  ['mfm-ts','inv-ts','smb-ts'].forEach(id=> document.getElementById(id).textContent = lastTs ? ' '+lastTs : '');
-  document.getElementById('mfm-live-body').innerHTML = latestMfm.length ? latestMfm.map(mfmRow).join('') : '<tr><td colspan="15" class="pm">MFM डेटा नाही</td></tr>';
-  document.getElementById('inv-live-body').innerHTML = latestInv.length ? latestInv.map(invRow).join('') : '<tr><td colspan="13" class="pm">Inverter डेटा नाही</td></tr>';
+  ['mfm-ts','inv-ts','smb-ts'].forEach(id=> { if(document.getElementById(id)) document.getElementById(id).textContent = lastTs ? ' '+lastTs : ''; });
+  document.getElementById('mfm-live-body').innerHTML = latestMfm.length ? latestMfm.map(mfmRow).join('') : '<tr><td colspan="15" class="pm">No Data</td></tr>';
+  document.getElementById('inv-live-body').innerHTML = latestInv.length ? latestInv.map(invRow).join('') : '<tr><td colspan="13" class="pm">No Data</td></tr>';
   if(latestInv.length) updateChart(latestInv);
   window.__latestInvRowsForSmb = latestInv;
   renderSmbLive();
@@ -651,8 +537,7 @@ function latestPerDevice(rows) {
 }
 
 function setStatus(type,msg) {
-  const b = document.getElementById('sbar');
-  if(!b) return;
+  const b = document.getElementById('sbar'); if(!b) return;
   b.className = 'sbar ' + (type==='ok'?'ok':(type==='err'?'err':''));
   b.innerHTML = (type==='loading'?'<span class="spin"></span>':'')+' '+msg;
 }
@@ -685,12 +570,9 @@ function updateChart(invRows) {
       data:{ labels, datasets:[{ label:'AC Power', data, backgroundColor:'#38bdf8', borderRadius:4 }] },
       options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{grid:{color:'#2d3748'},ticks:{color:'#94a3b8'}}, x:{grid:{display:false},ticks:{color:'#94a3b8'}} } }
     });
-  } else {
-    chart.data.labels = labels; chart.data.datasets[0].data = data; chart.update();
-  }
+  } else { chart.data.labels = labels; chart.data.datasets[0].data = data; chart.update(); }
 }
 
-/* RENDERING TABULAR DAY DATA */
 function getTargetDateISO(type) { return document.getElementById(type+'-date-filter').value || todayStrISO(); }
 
 async function ensureDataForISO(isoDate) {
@@ -701,22 +583,19 @@ async function ensureDataForISO(isoDate) {
 
 async function onDateChange(type) {
   try {
-    document.getElementById(type+'-day-body').innerHTML = '<tr><td class="pm">डेटा लोड होत आहे...</td></tr>';
+    document.getElementById(type+'-day-body').innerHTML = '<tr><td class="pm">लोड होत आहे...</td></tr>';
     const iso = getTargetDateISO(type);
     const parsed = await ensureDataForISO(iso);
     updateKnownDevices(parsed);
     if(type==='mfm') renderMfmDay();
     if(type==='inv') renderInvDay();
     if(type==='smb') renderSmbDay();
-  } catch(e) {
-    document.getElementById(type+'-day-body').innerHTML = `<tr><td class="pm neg">❌ लोड करण्यात चूक: ${e.message}</td></tr>`;
-  }
+  } catch(e) { document.getElementById(type+'-day-body').innerHTML = `<tr><td class="pm neg">❌ एरर: ${e.message}</td></tr>`; }
 }
 
 function renderMfmDay() {
   const iso = getTargetDateISO('mfm');
-  const d = dayCache[isoToCompact(iso)];
-  if(!d) return;
+  const d = dayCache[isoToCompact(iso)]; if(!d) return;
   const fDev = document.getElementById('mfm-dev-filter').value;
   let rows = d.mfm.filter(r => isMfmEnabled(r[C.name]||''));
   if(fDev!=='ALL') rows = rows.filter(r => r[C.name]===fDev);
@@ -732,8 +611,7 @@ function renderMfmDay() {
 
 function renderInvDay() {
   const iso = getTargetDateISO('inv');
-  const d = dayCache[isoToCompact(iso)];
-  if(!d) return;
+  const d = dayCache[isoToCompact(iso)]; if(!d) return;
   const fDev = document.getElementById('inv-dev-filter').value;
   let rows = d.inv.filter(r => isInvEnabled(r[C.name]||''));
   if(fDev!=='ALL') rows = rows.filter(r => r[C.name]===fDev);
@@ -748,23 +626,27 @@ function renderInvDay() {
 }
 
 function onSmbInverterChange() { renderSmbDay(); }
+
 function renderSmbDay() {
   const iso = getTargetDateISO('smb');
-  const d = dayCache[isoToCompact(iso)];
-  if(!d) return;
+  const d = dayCache[isoToCompact(iso)]; if(!d) return;
   const fInv = document.getElementById('smb-dev-filter').value;
   if(!fInv) {
-    document.getElementById('smb-day-body').innerHTML = '<tr><td colspan="34" class="pm">Inverter निवडा</td></tr>';
+    document.getElementById('smb-day-body').innerHTML = '<tr><td colspan="34" class="pm">Inverter select करा</td></tr>';
+    document.getElementById('smb-row-count').textContent = '0 Rows';
     return;
   }
   const rows = d.inv.filter(r => r[C.name]===fInv);
   document.getElementById('smb-row-count').textContent = rows.length + ' Rows';
   document.getElementById('smb-day-title').textContent = `SMB Day Data (${fInv}) — ${iso}`;
+  
   const settings = smbGetInverterSettings(fInv);
   const activeKeys = SMB_KEYS.filter(k => settings[k] && settings[k].enabled);
+  
   let headHtml = '<th>Time</th><th>Device</th>';
   activeKeys.forEach(k => { headHtml += `<th>${settings[k].name} (A)</th>`; });
   document.getElementById('smb-day-head').innerHTML = headHtml;
+  
   document.getElementById('smb-day-body').innerHTML = rows.length ? rows.map(r => {
     let tdHtml = `<td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>`;
     activeKeys.forEach(k => { tdHtml += `<td>${val(r[C[k]])}</td>`; });
@@ -773,13 +655,12 @@ function renderSmbDay() {
 }
 
 function renderSmbLive() {
-  const sel = document.getElementById('smb-live-inv-select');
-  if(!sel) return;
+  const sel = document.getElementById('smb-live-inv-select'); if(!sel) return;
   const fInv = sel.value;
   if(!fInv) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="4" class="pm">Inverter select करा</td></tr>'; return; }
   const rows = window.__latestInvRowsForSmb || [];
   const r = rows.find(x => x[C.name]===fInv);
-  if(!r) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="4" class="pm">या Inverter चा live डेटा नाही</td></tr>'; return; }
+  if(!r) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="4" class="pm">या Inverter चा लाईव्ह डेटा उपलब्ध नाही</td></tr>'; return; }
   const settings = smbGetInverterSettings(fInv);
   let html = '';
   SMB_KEYS.forEach(k => {
@@ -790,16 +671,12 @@ function renderSmbLive() {
   document.getElementById('smb-live-body').innerHTML = html;
 }
 
-/* DOWNLOAD EXCEL & PDF FUNCTIONS VIA JAVASCRIPT */
 function downloadExcel(tableID, filename = '') {
-    const table = document.getElementById(tableID);
-    if (!table) return;
-    let csv = [];
-    const rows = table.querySelectorAll("tr");
+    const table = document.getElementById(tableID); if (!table) return;
+    let csv = []; const rows = table.querySelectorAll("tr");
     for (let i = 0; i < rows.length; i++) {
         let row = [], cols = rows[i].querySelectorAll("td, th");
         for (let j = 0; j < cols.length; j++) {
-            // अल्पविराम (comma) मुळे अडचण येऊ नये म्हणून डेटाकोट (quotes) मध्ये घेतला आहे
             row.push('"' + cols[j].innerText.trim().replace(/"/g, '""') + '"');
         }
         csv.push(row.join(","));
@@ -809,15 +686,11 @@ function downloadExcel(tableID, filename = '') {
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", (filename || 'Export') + '_' + new Date().toISOString().slice(0,10) + '.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function downloadPDF(elementID, filename = '') {
-    const element = document.getElementById(elementID);
-    if (!element) return;
-    // PDF उत्तम प्रकारे फॉरमॅट होण्यासाठी पर्याय (options)
+    const element = document.getElementById(elementID); if (!element) return;
     const opt = {
         margin:       0.2,
         filename:     (filename || 'Report') + '_' + new Date().toISOString().slice(0,10) + '.pdf',
@@ -828,102 +701,13 @@ function downloadPDF(elementID, filename = '') {
     html2pdf().set(opt).from(element).save();
 }
 
-/* SETTINGS VIEW RENDERING */
-function renderMfmToggles() {
-  const div = document.getElementById('mfm-toggle-list'); if(!div)return;
-  document.getElementById('mfm-sec-count').textContent = knownMfmDevices.length + ' Total';
-  div.innerHTML = knownMfmDevices.map(name => devToggleRow('mfm', name, isMfmEnabled(name))).join('');
-}
-function renderInvToggles() {
-  const div = document.getElementById('inv-toggle-list'); if(!div)return;
-  document.getElementById('inv-sec-count').textContent = knownInvDevices.length + ' Total';
-  div.innerHTML = knownInvDevices.map(name => {
-    const invE = isInvEnabled(name); const smbE = isSmbEnabledForInv(name);
-    return devToggleRow('inv', name, invE) + smbToggleRow(name, smbE);
-  }).join('');
-}
-
-function devToggleRow(type, name, enabled) {
-  const lbl = type==='mfm'?'⚡ MFM Device':'🔌 Inverter';
-  return `<div class="dev-toggle-row">
-    <div class="dev-toggle-info"><span class="dev-toggle-name">${name}</span><span class="dev-toggle-meta">${lbl}</span></div>
-    <div class="toggle-wrap"><span class="toggle-label">${enabled?'Active':'Disabled'}</span>
-    <label class="toggle"><input type="checkbox" ${enabled?'checked':''} onchange="onDevToggleClick('${type}','${name}',this)"><span class="toggle-slider"></span></label>
-    </div></div>`;
-}
-function smbToggleRow(invName, enabled) {
-  return `<div class="dev-toggle-row" style="margin-left:20px;border-color:rgba(45,55,72,.4);background:rgba(21,27,38,.4)">
-    <div class="dev-toggle-info"><span class="dev-toggle-name" style="font-size:11px;color:var(--mut)">SMB Read</span></div>
-    <div class="toggle-wrap"><span class="toggle-label" style="font-size:9px;">${enabled?'ON':'OFF'}</span>
-    <label class="toggle" style="width:34px;height:18px;"><input type="checkbox" ${enabled?'checked':''} onchange="onSmbToggleClick('${invName}',this)"><span class="toggle-slider"></span></label>
-    </div></div>`;
-}
-
-function onDevToggleClick(type, name, cb) {
-  const current = loadDisabledSets();
-  if(cb.checked) current[type].delete(name); else current[type].add(name);
-  if(type==='mfm') saveDisabledMfm([...current.mfm]); else saveDisabledInv([...current.inv]);
-  cb.parentElement.previousElementSibling.textContent = cb.checked ? 'Active' : 'Disabled';
-  const parsed = dayCache[isoToCompact(getTargetDateISO('mfm')) || isoToCompact(todayStrISO())];
-  if(parsed) renderLiveFromParsed(parsed);
-}
-function onSmbToggleClick(invName, cb) {
-  const arr = JSON.parse(localStorage.getItem(LS_SMB_DISABLED) || '[]');
-  const s = new Set(arr); if(cb.checked) s.delete(invName); else s.add(invName);
-  localStorage.setItem(LS_SMB_DISABLED, JSON.stringify([...s])); DISABLED_SETS.smb = s;
-  cb.parentElement.previousElementSibling.textContent = cb.checked ? 'ON' : 'OFF';
-  populateInverterSelect('smb-settings-inv-sel', knownInvDevices.filter(isSmbEnabledForInv).map(n=>({name:n})));
-  populateInverterSelect('smb-live-inv-select', knownInvDevices.filter(isSmbEnabledForInv).map(n=>({name:n})));
-  populateInverterSelect('smb-dev-filter', knownInvDevices.filter(isSmbEnabledForInv).map(n=>({name:n})));
-  const parsed = dayCache[isoToCompact(todayStrISO())]; if(parsed) renderLiveFromParsed(parsed);
-}
-
-function renderSmbSettingsPanel() {
-  const invName = document.getElementById('smb-settings-inv-sel').value;
-  const p = document.getElementById('smb-string-panel'); if(!p)return;
-  if(!invName) { p.innerHTML = '<div class="pm">Inverter निवडा</div>'; return; }
-  const settings = smbGetInverterSettings(invName);
-  let html = '<div class="smb-string-grid">';
-  SMB_KEYS.forEach(k => {
-    const s = settings[k] || smbDefaultEntry(k);
-    html += `<div class="smb-string-row"><span class="smb-string-key">${k.toUpperCase()}</span>
-    <input class="smb-string-input" type="text" value="${s.name}" onchange="onStringRename('${invName}','${k}',this.value)"/>
-    <label class="toggle" style="width:30px;height:16px;"><input type="checkbox" ${s.enabled?'checked':''} onchange="onStringToggle('${invName}','${k}',this.checked)"/><span class="toggle-slider"></span></label>
-    </div>`;
-  });
-  html += '</div>'; p.innerHTML = html;
-}
-function onStringRename(inv,k,val) { smbSetSetting(inv,k,{name:val.trim()||k.toUpperCase()}); renderSmbLive(); }
-function onStringToggle(inv,k,chk) { smbSetSetting(inv,k,{enabled:chk}); renderSmbLive(); }
-function resetSmbStrings() {
-  const inv = document.getElementById('smb-settings-inv-sel').value; if(!inv)return;
-  if(confirm(`नक्की ${inv} चे सर्व string नावे रिसेट करायची?`)) { delete smbSettings[inv]; smbStoreSave(); renderSmbSettingsPanel(); renderSmbLive(); }
-}
-function resetAllSettings() {
-  if(confirm('🚨 नक्की सर्व settings (डिहायबल केलेले डिवाइसेस, रिनेम केलेल्या स्ट्रिंग्ज) डिलीट करायचे आहेत का?')) {
-    localStorage.clear(); DISABLED_SETS = loadDisabledSets(); smbSettings = {};
-    alert('सर्व सेटिंग्ज रीसेट झाल्या आहेत, पेज रीलोड होत आहे.'); window.location.reload();
-  }
-}
-
-function populateInverterSelect(id, list) {
-  const sel = document.getElementById(id); if(!sel) return;
-  const oldVal = sel.value;
-  let html = id==='smb-dev-filter'||id==='smb-settings-inv-sel' ? '<option value="">— Select Inverter —</option>':'';
-  if(id==='mfm-dev-filter') html = '<option value="ALL">All MFM</option>';
-  if(id==='inv-dev-filter') html = '<option value="ALL">All Inverters</option>';
-  list.forEach(x => { html += `<option value="${x.name}">${x.name}</option>`; });
-  sel.innerHTML = html; sel.value = oldVal; if(!sel.value && sel.options.length>0) sel.selectedIndex=0;
-}
-
-/* NAVIGATION */
+/* VIEW TOGGLES */
 function goDash() { switchView('dash', 'Dashboard Overview'); }
 function goTab() { switchView('tab', 'Tabular Data View'); }
-function goSettings() { switchView('settings', 'System Configuration'); renderMfmToggles(); renderInvToggles(); renderSmbSettingsPanel(); }
 function openTabular(type,sub) { goTab(); switchTabMain(type); switchTabSub(type,sub); }
 
 function switchView(v, title) {
-  ['dash','tab','settings'].forEach(x => {
+  ['dash','tab'].forEach(x => {
     document.getElementById('view-'+x).classList.toggle('active', x===v);
     document.getElementById('nav-'+x)?.classList.toggle('active', x===v);
   });
@@ -950,31 +734,17 @@ function switchTabSub(type,sub){
   document.getElementById(rp).style.display=sub==='report'?'':'none';
 }
 
-function toggleSection(id) { document.getElementById(id).classList.toggle('collapsed'); }
-
-/* UTILS */
 function todayStrISO() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function isoToCompact(iso) { return iso.replace(/-/g,''); }
 
-/* INIT */
 window.addEventListener('DOMContentLoaded', ()=>{
-  setInterval(()=>{
-    document.getElementById('clock').textContent=new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'});
-  },1000);
-
-  smbStoreLoad();
-
+  setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'}); },1000);
+  loadHardcodedSmbSettings();
   const today = todayStrISO();
-  ['mfm','inv','smb'].forEach(t => {
-    const input = document.getElementById(t+'-date-filter');
-    if(input) { input.value = today; input.max = today; }
-  });
-
-  fetchLiveData();
-  setInterval(fetchLiveData, REFRESH);
+  ['mfm','inv','smb'].forEach(t => { const input = document.getElementById(t+'-date-filter'); if(input) { input.value = today; input.max = today; } });
+  fetchLiveData(); setInterval(fetchLiveData, REFRESH);
 });
 </script>
 </body>
