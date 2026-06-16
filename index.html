@@ -150,7 +150,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
   <div id="content">
 
-    <!-- DASHBOARD VIEW -->
     <div class="view active" id="view-dash">
       <div class="sbar" id="sbar"><span class="spin"></span> Loading...</div>
       <div class="cards-row">
@@ -186,7 +185,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <button class="tab-btn" id="dtab-smb" onclick="switchDash('smb')">🔲 SMB Data</button>
       </div>
 
-      <!-- MFM live -->
       <div class="dc" id="dp-mfm">
         <div class="dc-hdr">MFM — <span>Live Reading</span><span id="mfm-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
@@ -202,7 +200,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
-      <!-- Inverter live -->
       <div class="dc" id="dp-inv" style="display:none">
         <div class="dc-hdr">Inverters — <span>Live Reading</span><span id="inv-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div class="tw">
@@ -217,7 +214,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
-      <!-- SMB live -->
       <div class="dc" id="dp-smb" style="display:none">
         <div class="dc-hdr">SMB — <span>Live Reading (per Inverter, S1–S32)</span><span id="smb-ts" style="font-size:10px;color:var(--mut)"></span></div>
         <div style="padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);">
@@ -227,9 +223,9 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <div class="tw">
           <table>
             <thead><tr>
-              <th>String</th><th>Custom Name</th><th>Value</th><th>Enabled</th>
+              <th>String</th><th>Custom Name</th><th>Value</th>
             </tr></thead>
-            <tbody id="smb-live-body"><tr><td colspan="4" class="pm">Inverter select करा</td></tr></tbody>
+            <tbody id="smb-live-body"><tr><td colspan="3" class="pm">Inverter select करा</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -240,7 +236,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
       </div>
     </div>
 
-    <!-- TABULAR VIEW -->
     <div class="view" id="view-tab">
       <div class="itab-row">
         <button class="itab active" id="tt-mfm" onclick="switchTabMain('mfm')">⚡ MFM</button>
@@ -248,7 +243,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <button class="itab" id="tt-smb" onclick="switchTabMain('smb')">🔲 SMB</button>
       </div>
 
-      <!-- MFM Tabular -->
       <div id="tp-mfm">
         <div class="itab-row">
           <button class="itab active" id="tm-day" onclick="switchTabSub('mfm','day')">📅 Day Data</button>
@@ -285,7 +279,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
-      <!-- Inverter Tabular -->
       <div id="tp-inv" style="display:none">
         <div class="itab-row">
           <button class="itab active" id="ti-day" onclick="switchTabSub('inv','day')">📅 Day Data</button>
@@ -321,7 +314,6 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
-      <!-- SMB Tabular -->
       <div id="tp-smb" style="display:none">
         <div class="itab-row">
           <button class="itab active" id="ts-day" onclick="switchTabSub('smb','day')">📅 Day Data</button>
@@ -360,14 +352,13 @@ tr:hover td{background:rgba(246,201,14,.03);}
 // ==========================================
 // EXAMPLE 1: MFM किंवा Inverter पूर्ण बंद करणे
 // ==========================================
-// जर तुला एखादा इनव्हरटर किंवा MFM पूर्ण फिल्टर करायचा (काढून टाकायचा) असेल, 
-// तर खालील यादीत (Set मध्ये) त्याचे अचूक नाव टाईप कर.
+// जर एखादा इनव्हरटर किंवा MFM पूर्ण फिल्टर करायचा असेल तर खाली नाव टाका.
 const HARDCODED_DISABLED = {
-  mfm: new Set(['PHT4', 'PHT5'
-    // 'MFM_02', 'MFM_04' <-- इथे नावे टाकू शकता
+  mfm: new Set([
+    // 'MFM_02' <-- हवे असल्यास नाव टाका
   ]),
-  inv: new Set(['BIL_3'
-    // 'Inverter_05', 'Inverter_08' <-- इथे नावे टाकू शकता
+  inv: new Set([
+    // 'Inverter_05' <-- हवे असल्यास नाव टाका
   ])
 };
 
@@ -380,36 +371,33 @@ for(let i=1;i<=32;i++) SMB_KEYS.push('s'+i);
 function smbDefaultEntry(sKey) { return { name: sKey.toUpperCase(), enabled: true }; }
 
 // ==========================================
-// EXAMPLE 2: SMB स्ट्रिंग्स बंद करणे किंवा नावे बदलणे
+// EXAMPLE 2: SMB स्ट्रिंग्स बंद करणे (आता पूर्ण गायब होतील)
 // ==========================================
 function loadHardcodedSmbSettings() {
-   smbSettings['BIL_1'] = {};
-  SMB_KEYS.forEach(k => { smbSettings['BIL_1'][k] = smbDefaultEntry(k); }); // सर्व डिफॉल्ट चालू केले
+  smbSettings['BIL_1'] = {};
+  SMB_KEYS.forEach(k => { smbSettings['BIL_1'][k] = smbDefaultEntry(k); }); 
   smbSettings['BIL_1']['s1'].name = "Zone_A";   // नाव बदलले
-  smbSettings['BIL_1']['s3'].enabled = false;   // S3
-  smbSettings['BIL_1']['s4'].enabled = false; 
-
-   smbSettings['BIL_2'] = {};
-  SMB_KEYS.forEach(k => { smbSettings['BIL_2'][k] = smbDefaultEntry(k); }); // सर्व डिफॉल्ट चालू केले
-  smbSettings['BIL_2']['s1'].name = "Zone_B";   // नाव बदलले
-  smbSettings['BIL_2']['s5'].enabled = false;   // S3
-  smbSettings['BIL_2']['s4'].enabled = false; 
-
+  smbSettings['BIL_1']['s3'].enabled = false;   // S3 पूर्णपणे गायब होईल
+  smbSettings['BIL_1']['s4'].enabled = false;   
+  
+  smbSettings['BIL_2'] = {};
+  SMB_KEYS.forEach(k => { smbSettings['BIL_2'][k] = smbDefaultEntry(k); });
+  smbSettings['BIL_2']['s4'].enabled = false;
 
   // उदाहरण अ: समजा 'Inverter_01' च्या S3 आणि S4 स्ट्रिंग्स बंद करायच्या आहेत आणि S1 चे नाव 'Zone_A' करायचे आहे:
   /*
   smbSettings['Inverter_01'] = {};
-  SMB_KEYS.forEach(k => { smbSettings['Inverter_01'][k] = smbDefaultEntry(k); }); // सर्व डिफॉल्ट चालू केले
+  SMB_KEYS.forEach(k => { smbSettings['Inverter_01'][k] = smbDefaultEntry(k); }); 
   smbSettings['Inverter_01']['s1'].name = "Zone_A";   // नाव बदलले
-  smbSettings['Inverter_01']['s3'].enabled = false;   // S3 बंद (फिल्टर होईल)
-  smbSettings['Inverter_01']['s4'].enabled = false;   // S4 बंद (फिल्टर होईल)
+  smbSettings['Inverter_01']['s3'].enabled = false;   // S3 पूर्णपणे गायब होईल
+  smbSettings['Inverter_01']['s4'].enabled = false;   // S4 पूर्णपणे गायब होईल
   */
 
   // उदाहरण ब: समजा 'Inverter_02' ची S10 स्ट्रिंग बंद करायची आहे:
   /*
   smbSettings['Inverter_02'] = {};
   SMB_KEYS.forEach(k => { smbSettings['Inverter_02'][k] = smbDefaultEntry(k); });
-  smbSettings['Inverter_02']['s10'].enabled = false;  // S10 बंद केली
+  smbSettings['Inverter_02']['s10'].enabled = false;  // S10 पूर्णपणे गायब होईल
   */
 }
 
@@ -469,10 +457,8 @@ function updateKnownDevices(parsed) {
   
   if(changed) {
     knownMfmDevices.sort(); knownInvDevices.sort();
-    
     populateDropdown('mfm-dev-filter', knownMfmDevices, 'ALL', 'All MFM');
     populateDropdown('inv-dev-filter', knownInvDevices, 'ALL', 'All Inverters');
-    
     populateDropdown('smb-live-inv-select', knownInvDevices);
     populateDropdown('smb-dev-filter', knownInvDevices, '', '— Select Inverter —');
   }
@@ -641,6 +627,7 @@ function renderSmbDay() {
   document.getElementById('smb-day-title').textContent = `SMB Day Data (${fInv}) — ${iso}`;
   
   const settings = smbGetInverterSettings(fInv);
+  // इथे फक्त 'enabled: true' असलेल्याच स्ट्रिंग्स फिल्टर होतात (Tabular View साठी)
   const activeKeys = SMB_KEYS.filter(k => settings[k] && settings[k].enabled);
   
   let headHtml = '<th>Time</th><th>Device</th>';
@@ -657,16 +644,21 @@ function renderSmbDay() {
 function renderSmbLive() {
   const sel = document.getElementById('smb-live-inv-select'); if(!sel) return;
   const fInv = sel.value;
-  if(!fInv) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="4" class="pm">Inverter select करा</td></tr>'; return; }
+  if(!fInv) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="3" class="pm">Inverter select करा</td></tr>'; return; }
   const rows = window.__latestInvRowsForSmb || [];
   const r = rows.find(x => x[C.name]===fInv);
-  if(!r) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="4" class="pm">या Inverter चा लाईव्ह डेटा उपलब्ध नाही</td></tr>'; return; }
+  if(!r) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="3" class="pm">या Inverter चा लाईव्ह डेटा उपलब्ध नाही</td></tr>'; return; }
+  
   const settings = smbGetInverterSettings(fInv);
   let html = '';
+  
   SMB_KEYS.forEach(k => {
     const s = settings[k] || smbDefaultEntry(k);
-    html += `<tr><td>${k.toUpperCase()}</td><td>${s.name}</td><td>${val(r[C[k]])}</td>
-    <td class="${s.enabled?'pos':'neg'}">${s.enabled?'Enabled':'Disabled'}</td></tr>`;
+    
+    // फिक्स: जर स्ट्रिंग 'enabled: false' असेल, तर ती इथूनच 'return' होईल (म्हणजे डॅशबोर्डवर दिसणारच नाही)
+    if (s.enabled === false) return; 
+    
+    html += `<tr><td>${k.toUpperCase()}</td><td>${s.name}</td><td>${val(r[C[k]])}</td></tr>`;
   });
   document.getElementById('smb-live-body').innerHTML = html;
 }
