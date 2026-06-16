@@ -123,6 +123,9 @@ tr:hover td{background:rgba(246,201,14,.03);}
   <div class="sb-sec">Inverter Tabular</div>
   <div class="sb-sub" id="sl-inv-day" onclick="openTabular('inv','day')">📅 Day Data</div>
   <div class="sb-sub" id="sl-inv-rep" onclick="openTabular('inv','report')">📁 Reports</div>
+  <div class="sb-sec">SMB Tabular</div>
+  <div class="sb-sub" id="sl-smb-day" onclick="openTabular('smb','day')">📅 Day Data</div>
+  <div class="sb-sub" id="sl-smb-rep" onclick="openTabular('smb','report')">📁 Reports</div>
   <div class="sb-footer">
     <span class="dot"></span>Auto-refresh: 5 min<br>
     <span id="sb-ts" style="font-size:9px;opacity:.7;">—</span>
@@ -174,6 +177,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
       <div class="tab-row">
         <button class="tab-btn active" id="dtab-mfm" onclick="switchDash('mfm')">⚡ MFM Data</button>
         <button class="tab-btn" id="dtab-inv" onclick="switchDash('inv')">🔌 Inverter Data</button>
+        <button class="tab-btn" id="dtab-smb" onclick="switchDash('smb')">🔲 SMB Data</button>
       </div>
 
       <!-- MFM live -->
@@ -207,6 +211,26 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
+      <!-- SMB live -->
+      <div class="dc" id="dp-smb" style="display:none">
+        <div class="dc-hdr">SMB — <span>Live Reading (per Inverter, S1–S32)</span><span id="smb-ts" style="font-size:10px;color:var(--mut)"></span></div>
+        <div style="padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);">
+          <label style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;">Inverter</label>
+          <select id="smb-live-inv-select" onchange="renderSmbLive()" style="background:#1a2235;border:1px solid var(--border);color:var(--txt);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;outline:none;">
+            <option value="">— Select Inverter —</option>
+          </select>
+          <button class="ref-btn" style="padding:5px 10px;font-size:10px;" onclick="toggleSmbEditMode()" id="smb-edit-btn">✏ Rename / Enable-Disable</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>String</th><th>Custom Name</th><th>Value</th><th>Enabled</th>
+            </tr></thead>
+            <tbody id="smb-live-body"><tr><td colspan="4" class="pm">Inverter select करा</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Bar chart -->
       <div class="chart-card">
         <div class="chart-title">Inverters — <b>AC Power (KW)</b></div>
@@ -220,6 +244,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
       <div class="itab-row">
         <button class="itab active" id="tt-mfm" onclick="switchTabMain('mfm')">⚡ MFM</button>
         <button class="itab" id="tt-inv" onclick="switchTabMain('inv')">🔌 Inverter</button>
+        <button class="itab" id="tt-smb" onclick="switchTabMain('smb')">🔲 SMB</button>
       </div>
 
       <!-- MFM tabular -->
@@ -297,29 +322,184 @@ tr:hover td{background:rgba(246,201,14,.03);}
         </div>
       </div>
 
+      <!-- SMB tabular -->
+      <div id="tp-smb" style="display:none">
+        <div class="itab-row">
+          <button class="itab active" id="ts-day" onclick="switchTabSub('smb','day')">📅 Day Data</button>
+          <button class="itab" id="ts-rep" onclick="switchTabSub('smb','report')">📁 Reports</button>
+        </div>
+        <div id="tp-smb-day">
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <label>Inverter</label>
+            <select id="smb-dev-filter" onchange="onSmbInverterChange()">
+              <option value="">— Select Inverter —</option>
+            </select>
+            <label>Date</label>
+            <input type="date" id="smb-date-filter" onchange="onDateChange('smb')"/>
+            <button class="ref-btn" style="padding:5px 10px;font-size:10px;" onclick="toggleSmbEditMode('day')" id="smb-day-edit-btn">✏ Rename / Enable-Disable</button>
+            <span class="filter-count" id="smb-row-count"></span>
+          </div>
+          <div class="dc">
+            <div class="dc-hdr">SMB — <span id="smb-day-title">Day Data (S1–S32)</span></div>
+            <div class="tw-tall">
+              <table>
+                <thead><tr id="smb-day-head">
+                  <th>Time</th><th>Device</th>
+                  <!-- S1..S32 headers injected dynamically -->
+                </tr></thead>
+                <tbody id="smb-day-body"><tr><td colspan="34" class="pm">Inverter आणि date select करा</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="tp-smb-rep" style="display:none">
+          <div class="dc"><div class="pm" style="padding:50px">📁 SMB Reports URL नंतर update केले जाईल.</div></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
+/* ════════════════════════════════════════════════════════════════════
+   ⚙ DEVICE VISIBILITY CONFIG  (edit this block per-customer deployment)
+   ════════════════════════════════════════════════════════════════════
+   List the EXACT device names (as they appear in the "DeviceName"
+   column of the CSV, e.g. "PT_1_1", "MFM_2") that should be HIDDEN
+   from this customer's dashboard. Leave an array empty ([]) to show
+   all devices of that type.
+
+   Effect: any device listed here disappears EVERYWHERE —
+   live dashboard cards/tables/chart, tabular day-data tables,
+   device filter dropdowns, and (for inverters) the SMB tab.
+
+   DISABLED_SMB is separate: list an inverter name there ONLY if you
+   want that inverter's power/generation data to still show normally,
+   but its SMB (S1–S32 string) data hidden specifically.
+   ════════════════════════════════════════════════════════════════════ */
+const DISABLED_MFM  = ["MFM_4", "PHT4"];   // e.g. ["MFM_3", "MFM_4"]
+const DISABLED_INV  = [];   // e.g. ["PT_1_2"]
+const DISABLED_SMB  = [];   // e.g. ["PT_1_1"]  -> hides only SMB data for that inverter
+
+/* ── Storage hook (future-proofing) ──────────────────────────────────
+   These lists are hardcoded above for now (edit per deployment).
+   The functions below read an optional localStorage override so that,
+   if a settings UI is added later, toggles made there will persist
+   across reloads without any other code needing to change. Until such
+   a UI exists, localStorage stays empty and the hardcoded arrays above
+   are what's used. */
+function loadDisabledSets() {
+  let override = null;
+  try {
+    const raw = localStorage.getItem('deviceVisibilityOverride');
+    if(raw) override = JSON.parse(raw);
+  } catch(e) { /* ignore corrupt/blocked storage */ }
+
+  const mfm = new Set(override && override.mfm ? override.mfm : DISABLED_MFM);
+  const inv = new Set(override && override.inv ? override.inv : DISABLED_INV);
+  const smb = new Set(override && override.smb ? override.smb : DISABLED_SMB);
+  return { mfm, inv, smb };
+}
+// Call this if/when a future settings UI needs to persist changes:
+function saveDisabledOverride(mfmArr, invArr, smbArr) {
+  try {
+    localStorage.setItem('deviceVisibilityOverride', JSON.stringify({ mfm: mfmArr, inv: invArr, smb: smbArr }));
+  } catch(e) { /* storage unavailable, ignore */ }
+  DISABLED_SETS = loadDisabledSets();
+}
+let DISABLED_SETS = loadDisabledSets(); // { mfm:Set, inv:Set, smb:Set } — used everywhere below
+
+function isMfmEnabled(name){ return !DISABLED_SETS.mfm.has(name); }
+function isInvEnabled(name){ return !DISABLED_SETS.inv.has(name); }
+function isSmbEnabledForInv(name){ return !DISABLED_SETS.smb.has(name); }
+
 // Base Apps Script Web App URL (doGet). We append &date=YYYYMMDD for historical data.
 const DATA_URL = "https://script.google.com/macros/s/AKfycbydd54EPNw3jSiol2ggQOtyL-1mTc1ESXDNKl8MWwj0Zw3tZRic9CzrkjyYrarAIJNChw/exec";
 const REFRESH = 5*60*1000;
 
-// Column indices (matches CSV header order)
+// Column indices (matches CSV header order, 0-indexed, 90 columns total)
 const C = {
   ts:0,company:1,site:2,name:3,type:4,
   vr:5,vy:6,vb:7,ir:8,iy:9,ib:10,
   wr:11,wy:12,wb:13,f:14,pf:15,ikwh:16,ekwh:17,
   v:18,i:19,w:20,va:21,varC:22,wh:23,vah:24,varh:25,status:26,
   vin:27,iin:28,win:29,dkwh:30,tkwh:31,temp:32,
-  mv1:33,mv2:34,mv3:35,mv4:36,mv5:37
+  mv1:33,mv2:34,mv3:35,mv4:36,mv5:37,mv6:38,mv7:39,mv8:40,mv9:41,mv10:42,mv11:43,mv12:44,
+  s1:45,s2:46,s3:47,s4:48,s5:49,s6:50,s7:51,s8:52,s9:53,s10:54,
+  s11:55,s12:56,s13:57,s14:58,s15:59,s16:60,s17:61,s18:62,s19:63,s20:64,
+  s21:65,s22:66,s23:67,s24:68,
+  v1:69,v2:70,v3:71,i1:72,i2:73,i3:74,w1:75,w2:76,w3:77,
+  mv13:78,mv14:79,mv15:80,mv16:81,
+  s25:82,s26:83,s27:84,s28:85,s29:86,s30:87,s31:88,s32:89
 };
+
+// Ordered list of the 32 SMB string column keys (s1..s32) for easy iteration
+const SMB_KEYS = [];
+for(let i=1;i<=32;i++) SMB_KEYS.push('s'+i);
 
 let chart = null;
 
 // Cache: { 'YYYYMMDD': { mfm: [...rows], inv: [...rows] } }
 const dayCache = {};
+
+/* ════════════════════════════════════════════════════════════════
+   SMB SETTINGS STORE
+   Stores per-inverter, per-string (S1..S32) custom name + enabled flag.
+   Currently backed by an in-memory JS object, so settings reset on
+   page reload. The get/set/load/save functions below are the ONLY
+   place that touches the storage backend — to switch to localStorage
+   or a backend (Google Sheet via Apps Script) later, only the bodies
+   of smbStoreLoad()/smbStoreSave() need to change; all call sites
+   (smbGetSetting/smbSetSetting) stay the same.
+   ════════════════════════════════════════════════════════════════ */
+let smbSettings = {}; // { [inverterName]: { [sKey]: { name: 'S1', enabled: true } } }
+
+// Default state for one string
+function smbDefaultEntry(sKey) {
+  return { name: sKey.toUpperCase(), enabled: true };
+}
+
+// Read full settings object for an inverter (creates defaults if missing)
+function smbGetInverterSettings(invName) {
+  if(!smbSettings[invName]) {
+    const obj = {};
+    SMB_KEYS.forEach(k => obj[k] = smbDefaultEntry(k));
+    smbSettings[invName] = obj;
+  }
+  return smbSettings[invName];
+}
+
+// Get a single string's settings { name, enabled }
+function smbGetSetting(invName, sKey) {
+  return smbGetInverterSettings(invName)[sKey] || smbDefaultEntry(sKey);
+}
+
+// Update a single string's settings (partial: { name } or { enabled } or both)
+function smbSetSetting(invName, sKey, patch) {
+  const inv = smbGetInverterSettings(invName);
+  inv[sKey] = Object.assign({}, inv[sKey] || smbDefaultEntry(sKey), patch);
+  smbStoreSave(); // persist (currently no-op placeholder, see below)
+}
+
+// ── Storage backend hooks (swap these to add persistence later) ──
+function smbStoreLoad() {
+  // FUTURE: e.g. read from localStorage:
+  //   const raw = localStorage.getItem('smbSettings');
+  //   if(raw) smbSettings = JSON.parse(raw);
+  // FUTURE: or fetch from a backend endpoint and populate smbSettings.
+  // Currently: nothing to load, smbSettings starts empty (defaults apply).
+}
+function smbStoreSave() {
+  // FUTURE: e.g. write to localStorage:
+  //   localStorage.setItem('smbSettings', JSON.stringify(smbSettings));
+  // FUTURE: or POST to a backend endpoint to persist server-side.
+  // Currently: no-op, settings live only in memory for this session.
+}
+
+let smbEditMode = false;       // live-panel edit mode toggle
+let smbEditModeDay = false;    // day-table edit mode toggle
 
 window.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
@@ -327,17 +507,22 @@ window.addEventListener('DOMContentLoaded', () => {
       new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'});
   }, 1000);
 
+  smbStoreLoad(); // load persisted SMB naming/enable settings (no-op currently)
+
   // Set today's date as default in both date pickers
   const today = todayStrISO();
   document.getElementById('mfm-date-filter').value = today;
   document.getElementById('inv-date-filter').value = today;
   document.getElementById('mfm-date-filter').max = today;
   document.getElementById('inv-date-filter').max = today;
+  document.getElementById('smb-date-filter').value = today;
+  document.getElementById('smb-date-filter').max = today;
 
   initChart();
   fetchLiveData();                 // live dashboard cards/tables
   loadDayData('mfm', today, true); // initial day-table loads (today)
   loadDayData('inv', today, true);
+  loadDayData('smb', today, true);
   setInterval(fetchLiveData, REFRESH);
 });
 
@@ -377,6 +562,8 @@ async function fetchDayCSV(compactDate) {
 }
 
 // Parse CSV text -> { mfm:[cols...], inv:[cols...] } (skips header / "No CSV Found" etc.)
+// Disabled devices (DISABLED_MFM / DISABLED_INV) are filtered out right here,
+// so every downstream view (live, day-data, dropdowns, SMB) never sees them.
 function parseCSVToRows(raw) {
   const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
   const mfm = [], inv = [];
@@ -388,8 +575,12 @@ function parseCSVToRows(raw) {
     const cols = l.split(',');
     if(cols.length < 6) continue;
     const type = (cols[C.type]||'').trim().toUpperCase();
-    if(type === 'MFM') mfm.push(cols);
-    else if(type === 'INVERTER') inv.push(cols);
+    const name = (cols[C.name]||'').trim();
+    if(type === 'MFM') {
+      if(isMfmEnabled(name)) mfm.push(cols);
+    } else if(type === 'INVERTER') {
+      if(isInvEnabled(name)) inv.push(cols);
+    }
   }
   return { mfm, inv };
 }
@@ -413,8 +604,10 @@ async function fetchLiveData() {
     // If the day-table is currently showing "today", refresh it too
     const mfmDate = document.getElementById('mfm-date-filter').value;
     const invDate = document.getElementById('inv-date-filter').value;
+    const smbDate = document.getElementById('smb-date-filter').value;
     if(mfmDate === todayStrISO()) renderMfmDay();
     if(invDate === todayStrISO()) renderInvDay();
+    if(smbDate === todayStrISO()) renderSmbDay();
 
   } catch(e) {
     setStatus('err','❌ '+e.message);
@@ -440,6 +633,7 @@ function renderLiveFromParsed(parsed) {
   const lastTs = latestMfm.length ? (latestMfm[latestMfm.length-1][C.ts]||'') : '';
   document.getElementById('mfm-ts').textContent = lastTs ? '  '+lastTs : '';
   document.getElementById('inv-ts').textContent = lastTs ? '  '+lastTs : '';
+  document.getElementById('smb-ts').textContent = lastTs ? '  '+lastTs : '';
 
   // ── Live MFM table ──
   const mb = document.getElementById('mfm-live-body');
@@ -454,6 +648,11 @@ function renderLiveFromParsed(parsed) {
     : '<tr><td colspan="13" class="pm">Inverter डेटा नाही</td></tr>';
 
   if(latestInv.length) updateChart(latestInv);
+
+  // ── SMB live: cache latest inverter rows + keep dropdown in sync ──
+  window.__latestInvRowsForSmb = latestInv;
+  populateInverterSelect('smb-live-inv-select', latestInv);
+  renderSmbLive();
 }
 
 function latestPerDevice(rows) {
@@ -472,11 +671,11 @@ async function onDateChange(kind) {
   await loadDayData(kind, iso, false);
 }
 
-// Loads (from cache or fetch) the data for the given ISO date for mfm/inv day-table, then renders.
+// Loads (from cache or fetch) the data for the given ISO date for mfm/inv/smb day-table, then renders.
 async function loadDayData(kind, iso, isInitial) {
   const compact = isoToCompact(iso);
-  const bodyId = kind === 'mfm' ? 'mfm-day-body' : 'inv-day-body';
-  const colspan = kind === 'mfm' ? 16 : 14;
+  const bodyId = kind === 'mfm' ? 'mfm-day-body' : kind === 'inv' ? 'inv-day-body' : 'smb-day-body';
+  const colspan = kind === 'mfm' ? 16 : kind === 'inv' ? 14 : 34;
 
   if(!dayCache[compact]) {
     document.getElementById(bodyId).innerHTML =
@@ -490,10 +689,17 @@ async function loadDayData(kind, iso, isInitial) {
     }
   }
 
-  // populate device dropdown from this day's data
-  populateDropdown(kind+'-dev-filter', dayCache[compact][kind]);
-
-  if(kind === 'mfm') renderMfmDay(); else renderInvDay();
+  if(kind === 'mfm') {
+    populateDropdown('mfm-dev-filter', dayCache[compact].mfm);
+    renderMfmDay();
+  } else if(kind === 'inv') {
+    populateDropdown('inv-dev-filter', dayCache[compact].inv);
+    renderInvDay();
+  } else if(kind === 'smb') {
+    // SMB strings live inside Inverter rows, so reuse the inv data
+    populateInverterSelect('smb-dev-filter', dayCache[compact].inv);
+    renderSmbDay();
+  }
 }
 
 function populateDropdown(id, rows) {
@@ -504,6 +710,165 @@ function populateDropdown(id, rows) {
   sel.innerHTML = `<option value="ALL">${allLabel}</option>`
     + devices.map(d=>`<option value="${d}">${d}</option>`).join('');
   if(devices.includes(current)) sel.value = current;
+}
+
+// Populates a plain inverter-select dropdown (no "ALL" option) — used for SMB selectors
+// Excludes inverters listed in DISABLED_SMB (their power data still shows elsewhere, but SMB data is hidden)
+function populateInverterSelect(id, invRows) {
+  const sel = document.getElementById(id);
+  if(!sel) return;
+  const current = sel.value;
+  const devices = [...new Set((invRows||[]).map(r=>r[C.name]||''))]
+    .filter(Boolean)
+    .filter(isSmbEnabledForInv)
+    .sort();
+  sel.innerHTML = `<option value="">— Select Inverter —</option>`
+    + devices.map(d=>`<option value="${d}">${d}</option>`).join('');
+  if(devices.includes(current)) sel.value = current;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SMB (S1–S32) RENDERING
+   ════════════════════════════════════════════════════════════════ */
+
+// ── Live SMB panel: shows S1..S32 for the selected inverter from the latest live row ──
+function renderSmbLive() {
+  const sel = document.getElementById('smb-live-inv-select');
+  const invName = sel ? sel.value : '';
+  const body = document.getElementById('smb-live-body');
+  if(!invName) {
+    body.innerHTML = '<tr><td colspan="4" class="pm">Inverter select करा</td></tr>';
+    return;
+  }
+  if(!isSmbEnabledForInv(invName)) {
+    body.innerHTML = '<tr><td colspan="4" class="pm">SMB डेटा या Inverter साठी उपलब्ध नाही</td></tr>';
+    return;
+  }
+  const rows = window.__latestInvRowsForSmb || [];
+  const row = rows.find(r => (r[C.name]||'') === invName);
+  if(!row) {
+    body.innerHTML = '<tr><td colspan="4" class="pm">या Inverter साठी डेटा नाही</td></tr>';
+    return;
+  }
+  body.innerHTML = SMB_KEYS.map(sKey => smbRowHtml(invName, sKey, row[C[sKey]], smbEditMode)).join('');
+}
+
+// Builds one <tr> for a single S-string, in either view mode or edit mode
+function smbRowHtml(invName, sKey, rawValue, editMode) {
+  const setting = smbGetSetting(invName, sKey);
+  const val = n(rawValue);
+  const rowStyle = setting.enabled ? '' : 'opacity:.4;';
+
+  if(editMode) {
+    return `<tr style="${rowStyle}">
+      <td>${sKey.toUpperCase()}</td>
+      <td><input type="text" value="${escapeHtml(setting.name)}" style="background:#1a2235;border:1px solid var(--border);color:var(--txt);padding:4px 7px;border-radius:5px;font-size:11px;width:110px;"
+            onchange="smbSetSetting('${invName}','${sKey}',{name:this.value}); renderSmbLive(); renderSmbDay();"/></td>
+      <td>${val}</td>
+      <td style="text-align:center;">
+        <input type="checkbox" ${setting.enabled?'checked':''}
+          onchange="smbSetSetting('${invName}','${sKey}',{enabled:this.checked}); renderSmbLive(); renderSmbDay();"/>
+      </td>
+    </tr>`;
+  }
+  if(!setting.enabled) return ''; // hidden in view mode if disabled
+  return `<tr>
+    <td>${sKey.toUpperCase()}</td>
+    <td>${escapeHtml(setting.name)}</td>
+    <td>${val}</td>
+    <td class="pos">●</td>
+  </tr>`;
+}
+
+function toggleSmbEditMode(which) {
+  if(which === 'day') {
+    smbEditModeDay = !smbEditModeDay;
+    document.getElementById('smb-day-edit-btn').textContent = smbEditModeDay ? '✓ Done editing' : '✏ Rename / Enable-Disable';
+    renderSmbDay();
+  } else {
+    smbEditMode = !smbEditMode;
+    document.getElementById('smb-edit-btn').textContent = smbEditMode ? '✓ Done editing' : '✏ Rename / Enable-Disable';
+    renderSmbLive();
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── Day-table SMB: shows S1..S32 columns for selected inverter across the day's timestamps ──
+function onSmbInverterChange() {
+  renderSmbDay();
+}
+
+function renderSmbDay() {
+  const iso = document.getElementById('smb-date-filter').value;
+  const compact = isoToCompact(iso);
+  const invName = document.getElementById('smb-dev-filter').value;
+  const data = dayCache[compact];
+  const rows = data ? data.inv : [];
+
+  document.getElementById('smb-day-title').textContent =
+    'Day Data — ' + formatDisplayDate(iso) + (iso===todayStrISO() ? ' (Today, 5-min intervals)' : '');
+
+  const head = document.getElementById('smb-day-head');
+  const body = document.getElementById('smb-day-body');
+
+  if(!invName) {
+    head.innerHTML = '<th>Time</th><th>Device</th>';
+    body.innerHTML = '<tr><td colspan="2" class="pm">Inverter select करा</td></tr>';
+    document.getElementById('smb-row-count').textContent = '';
+    return;
+  }
+
+  if(!isSmbEnabledForInv(invName)) {
+    head.innerHTML = '<th>Time</th><th>Device</th>';
+    body.innerHTML = '<tr><td colspan="2" class="pm">SMB डेटा या Inverter साठी उपलब्ध नाही</td></tr>';
+    document.getElementById('smb-row-count').textContent = '';
+    return;
+  }
+
+  // visible S-keys depend on edit mode (edit mode shows all + controls in header row once)
+  const visibleKeys = smbEditModeDay ? SMB_KEYS : SMB_KEYS.filter(k => smbGetSetting(invName,k).enabled);
+
+  head.innerHTML = '<th>Time</th><th>Device</th>' +
+    visibleKeys.map(k => `<th>${escapeHtml(smbGetSetting(invName,k).name)}</th>`).join('');
+
+  const filtered = rows.filter(r => (r[C.name]||'')===invName);
+  filtered.sort((a,b)=>(a[C.ts]||'').localeCompare(b[C.ts]||''));
+
+  document.getElementById('smb-row-count').textContent = filtered.length+' records';
+
+  if(!filtered.length) {
+    body.innerHTML = `<tr><td colspan="${2+visibleKeys.length}" class="pm">${data ? 'या filter साठी डेटा नाही' : 'डेटा उपलब्ध नाही'}</td></tr>`;
+    return;
+  }
+
+  if(smbEditModeDay) {
+    // Edit mode: show one row of name/enable controls above the data
+    const controlsRow = `<tr style="background:rgba(56,189,248,.05);">
+      <td colspan="2" style="color:var(--mut);font-size:10px;">Edit names / enable:</td>
+      ${visibleKeys.map(k => {
+        const s = smbGetSetting(invName,k);
+        return `<td>
+          <input type="text" value="${escapeHtml(s.name)}" style="background:#1a2235;border:1px solid var(--border);color:var(--txt);padding:3px 5px;border-radius:4px;font-size:10px;width:70px;"
+            onchange="smbSetSetting('${invName}','${k}',{name:this.value}); renderSmbDay();"/><br/>
+          <input type="checkbox" ${s.enabled?'checked':''}
+            onchange="smbSetSetting('${invName}','${k}',{enabled:this.checked}); renderSmbDay();"/> on
+        </td>`;
+      }).join('')}
+    </tr>`;
+    body.innerHTML = controlsRow + filtered.map(r => smbDayRowHtml(r, visibleKeys)).join('');
+  } else {
+    body.innerHTML = filtered.map(r => smbDayRowHtml(r, visibleKeys)).join('');
+  }
+}
+
+function smbDayRowHtml(r, visibleKeys) {
+  return `<tr>
+    <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>
+    ${visibleKeys.map(k => `<td>${n(r[C[k]])}</td>`).join('')}
+  </tr>`;
 }
 
 // ── Day table renderers (read from dayCache for the selected date) ──
@@ -668,14 +1033,18 @@ function showView(v){
 function switchDash(t){
   document.getElementById('dtab-mfm').classList.toggle('active',t==='mfm');
   document.getElementById('dtab-inv').classList.toggle('active',t==='inv');
+  document.getElementById('dtab-smb').classList.toggle('active',t==='smb');
   document.getElementById('dp-mfm').style.display=t==='mfm'?'':'none';
   document.getElementById('dp-inv').style.display=t==='inv'?'':'none';
+  document.getElementById('dp-smb').style.display=t==='smb'?'':'none';
 }
 function switchTabMain(t){
   document.getElementById('tt-mfm').classList.toggle('active',t==='mfm');
   document.getElementById('tt-inv').classList.toggle('active',t==='inv');
+  document.getElementById('tt-smb').classList.toggle('active',t==='smb');
   document.getElementById('tp-mfm').style.display=t==='mfm'?'':'none';
   document.getElementById('tp-inv').style.display=t==='inv'?'':'none';
+  document.getElementById('tp-smb').style.display=t==='smb'?'':'none';
 }
 function switchTabSub(type,sub){
   if(type==='mfm'){
@@ -683,11 +1052,16 @@ function switchTabSub(type,sub){
     document.getElementById('tm-rep').classList.toggle('active',sub==='report');
     document.getElementById('tp-mfm-day').style.display=sub==='day'?'':'none';
     document.getElementById('tp-mfm-rep').style.display=sub==='report'?'':'none';
-  } else {
+  } else if(type==='inv'){
     document.getElementById('ti-day').classList.toggle('active',sub==='day');
     document.getElementById('ti-rep').classList.toggle('active',sub==='report');
     document.getElementById('tp-inv-day').style.display=sub==='day'?'':'none';
     document.getElementById('tp-inv-rep').style.display=sub==='report'?'':'none';
+  } else if(type==='smb'){
+    document.getElementById('ts-day').classList.toggle('active',sub==='day');
+    document.getElementById('ts-rep').classList.toggle('active',sub==='report');
+    document.getElementById('tp-smb-day').style.display=sub==='day'?'':'none';
+    document.getElementById('tp-smb-rep').style.display=sub==='report'?'':'none';
   }
 }
 </script>
