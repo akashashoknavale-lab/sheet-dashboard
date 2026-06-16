@@ -545,7 +545,7 @@ function stClass(s) { const t=(s||'').toUpperCase(); return t==='OK'||t==='ONLIN
 
 function updateChart(invRows) {
   const labels = invRows.map(r=>r[C.name]||'');
-  const data = invRows.map(r=>parseFloat(r[C.win]||0));
+  const data = invRows.map(r=>parseFloat(r[C.w]||0));
   if(!chart) {
     const ctx = document.getElementById('invChart').getContext('2d');
     chart = new Chart(ctx, {
