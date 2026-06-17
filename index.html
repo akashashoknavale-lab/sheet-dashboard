@@ -57,12 +57,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* CARDS */
-.cards-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.cards-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.card-sub{font-size:10px;color:var(--mut);margin-top:5px;display:flex;align-items:center;gap:4px;}
+.card-sub .badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:rgba(34,197,94,.15);color:var(--grn);}
+.card-sub .badge.warn{background:rgba(246,201,14,.12);color:var(--acc);}
+.card-sub .badge.dim{background:rgba(148,163,184,.1);color:var(--mut);}
+.card-loading{opacity:.4;font-size:13px;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--acc);border-radius:10px 10px 0 0;}
 .card.blue::before{background:var(--acc2);}
 .card.green::before{background:var(--grn);}
 .card.purple::before{background:var(--purp);}
+.card.red::before{background:var(--red);}
+/* inline --top-color support */
+.card[style*="--top-color"]::before{background:var(--top-color);}
 .card-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);margin-bottom:7px;}
 .card-val{font-size:24px;font-weight:700;line-height:1;}
 .card-unit{font-size:11px;color:var(--mut);margin-top:3px;}
@@ -79,12 +87,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 /* FILTER BAR */
 .filter-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;flex-wrap:wrap;}
 .filter-bar label{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;}
-.filter-bar select,.filter-bar input[type=date]{
+.filter-bar select,.filter-bar input[type=date],.filter-bar input[type=month]{
   background:#1a2235;border:1px solid var(--border);color:var(--txt);
   padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;outline:none;
 }
 .filter-bar select:focus,.filter-bar input:focus{border-color:var(--acc2);}
-.filter-bar input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6);}
+.filter-bar input[type=date]::-webkit-calendar-picker-indicator,
+.filter-bar input[type=month]::-webkit-calendar-picker-indicator{filter:invert(.6);}
 .filter-count{margin-left:auto;font-size:10px;color:var(--mut);}
 
 /* TABLES */
@@ -92,7 +101,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .dc-hdr{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--mut);display:flex;justify-content:space-between;align-items:center;}
 .dc-hdr span{color:var(--acc);}
 .tw{overflow-x:auto;max-height:300px;overflow-y:auto;}
-.tw-tall{overflow-x:auto;max-height:460px;overflow-y:auto;}
+.tw-tall{overflow-x:auto;max-height:500px;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;font-size:11px;}
 thead{position:sticky;top:0;z-index:2;}
 th{background:#1a2235;color:var(--mut);padding:7px 9px;text-align:right;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
@@ -103,15 +112,30 @@ tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(246,201,14,.03);}
 .pos{color:var(--grn);} .neg{color:var(--red);}
 .pm{padding:28px;text-align:center;color:var(--mut);font-size:11px;}
+.total-row td{background:rgba(246,201,14,.07)!important;color:var(--acc)!important;font-weight:700;}
 
 /* CHART */
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;}
 .chart-title{font-size:11px;font-weight:600;color:var(--mut);margin-bottom:12px;}
 .chart-title b{color:var(--txt);}
-.chart-wrap{position:relative;height:190px;}
+.chart-wrap{position:relative;height:200px;}
 
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* REPORTS */
+.rep-summary-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+.rep-sum-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.rep-sum-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rep-sum-val{font-size:18px;font-weight:700;color:var(--acc2);}
+.rep-sum-val.total{color:var(--acc);}
+
+/* Period Range Filter */
+.period-label{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);
+  border-radius:6px;padding:3px 8px;font-size:10px;color:var(--acc2);font-weight:600;
+}
 </style>
 </head>
 <body>
@@ -150,33 +174,65 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
   <div id="content">
 
+    <!-- ========== DASHBOARD VIEW ========== -->
     <div class="view active" id="view-dash">
       <div class="sbar" id="sbar"><span class="spin"></span> Loading...</div>
       <div class="cards-row">
+
+        <!-- Card 1: Total Inverter Power (Live) -->
         <div class="card">
-          <div class="card-ico">⚡</div>
-          <div class="card-lbl">Plant Power</div>
+          <div class="card-ico">🔌</div>
+          <div class="card-lbl">Total Inverter Power (Live)</div>
           <div class="card-val" id="c-kw">—</div>
-          <div class="card-unit">kW</div>
+          <div class="card-unit">kW (AC)</div>
+          <div class="card-sub"><span class="badge" id="c-inv-count">—</span> inverters active</div>
         </div>
+
+        <!-- Card 2: Today MFM Export (from Report Sheet) -->
         <div class="card blue">
-          <div class="card-ico">🔋</div>
-          <div class="card-lbl">Total Export Energy — MFM</div>
-          <div class="card-val" id="c-kwh">—</div>
-          <div class="card-unit">kWh (ekwh)</div>
+          <div class="card-ico">⚡</div>
+          <div class="card-lbl">Today's MFM Export</div>
+          <div class="card-val card-loading" id="c-today-mfm">⋯</div>
+          <div class="card-unit">kWh (ekWh)</div>
+          <div class="card-sub"><span class="badge warn" id="c-today-date">—</span></div>
         </div>
+
+        <!-- Card 3: Yesterday MFM Export (from Report Sheet) -->
+        <div class="card" style="--top-color:#a78bfa" >
+          <div class="card-ico">📅</div>
+          <div class="card-lbl">Yesterday's MFM Export</div>
+          <div class="card-val card-loading" id="c-yest-mfm">⋯</div>
+          <div class="card-unit">kWh (ekWh)</div>
+          <div class="card-sub"><span class="badge dim" id="c-yest-date">—</span></div>
+        </div>
+
+        <!-- Card 4: This Month MFM Total (from Report Sheet) -->
         <div class="card green">
+          <div class="card-ico">🗓</div>
+          <div class="card-lbl">This Month — MFM Total</div>
+          <div class="card-val card-loading" id="c-month-mfm">⋯</div>
+          <div class="card-unit">kWh</div>
+          <div class="card-sub"><span class="badge" id="c-month-label">—</span></div>
+        </div>
+
+        <!-- Card 5: This Year MFM Total (from Report Sheet) -->
+        <div class="card blue">
+          <div class="card-ico">📆</div>
+          <div class="card-lbl">This Year — MFM Total</div>
+          <div class="card-val card-loading" id="c-year-mfm">⋯</div>
+          <div class="card-unit">kWh</div>
+          <div class="card-sub"><span class="badge" id="c-year-label">—</span></div>
+        </div>
+
+        <!-- Card 6: Day PR (placeholder) -->
+        <div class="card purple">
           <div class="card-ico">📈</div>
-          <div class="card-lbl">Performance Ratio (PR)</div>
+          <div class="card-lbl">Day PR</div>
           <div class="card-val" id="c-pr">—</div>
           <div class="card-unit">%</div>
+          <div class="card-sub"><span class="badge dim">Sensor pending</span></div>
         </div>
-        <div class="card purple">
-          <div class="card-ico">☀</div>
-          <div class="card-lbl">Irradiation</div>
-          <div class="card-val" id="c-irr">—</div>
-          <div class="card-unit">kWh/m²</div>
-        </div>
+
       </div>
 
       <div class="tab-row">
@@ -236,6 +292,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
       </div>
     </div>
 
+    <!-- ========== TABULAR VIEW ========== -->
     <div class="view" id="view-tab">
       <div class="itab-row">
         <button class="itab active" id="tt-mfm" onclick="switchTabMain('mfm')">⚡ MFM</button>
@@ -243,6 +300,7 @@ tr:hover td{background:rgba(246,201,14,.03);}
         <button class="itab" id="tt-smb" onclick="switchTabMain('smb')">🔲 SMB</button>
       </div>
 
+      <!-- ===== MFM TABULAR ===== -->
       <div id="tp-mfm">
         <div class="itab-row">
           <button class="itab active" id="tm-day" onclick="switchTabSub('mfm','day')">📅 Day Data</button>
@@ -274,11 +332,89 @@ tr:hover td{background:rgba(246,201,14,.03);}
             </div>
           </div>
         </div>
+
+        <!-- MFM REPORTS -->
         <div id="tp-mfm-rep" style="display:none">
-          <div class="dc"><div class="pm" style="padding:50px">📁 MFM Reports URL नंतर update केले जाईल.</div></div>
+          <div class="itab-row">
+            <button class="itab active" id="mr-day" onclick="switchRepSub('mfm','day')">📅 Date Range Report</button>
+            <button class="itab" id="mr-mon" onclick="switchRepSub('mfm','month')">🗓 Monthly Report</button>
+            <button class="itab" id="mr-yr" onclick="switchRepSub('mfm','year')">📆 Yearly Report</button>
+          </div>
+
+          <!-- MFM DATE RANGE REPORT -->
+          <div id="rep-mfm-day">
+            <div class="filter-bar">
+              <label>From</label>
+              <input type="date" id="rep-mfm-from-date" onchange="renderRepPeriod('mfm')"/>
+              <label>To</label>
+              <input type="date" id="rep-mfm-to-date" onchange="renderRepPeriod('mfm')"/>
+              <span id="rep-mfm-range-label" class="period-label" style="display:none"></span>
+              <button class="dl-btn" onclick="downloadExcel('rep-mfm-day-table', 'MFM_Period_Report')">📥 Excel</button>
+              <button class="dl-btn pdf-btn" onclick="downloadPDF('rep-mfm-day-content', 'MFM_Period_Report')">📄 PDF</button>
+            </div>
+            <div class="rep-summary-row" id="rep-mfm-period-summary"></div>
+            <div class="dc" id="rep-mfm-day-content">
+              <div class="dc-hdr">MFM — <span id="rep-mfm-day-title">Date Range Report</span></div>
+              <div class="tw-tall">
+                <table id="rep-mfm-day-table">
+                  <thead><tr id="rep-mfm-day-head"><th>Date</th></tr></thead>
+                  <tbody id="rep-mfm-day-body"><tr><td colspan="2" class="pm">From और To date select करा</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MFM MONTHLY REPORT -->
+          <div id="rep-mfm-month" style="display:none">
+            <div class="filter-bar">
+              <label>Month</label>
+              <input type="month" id="rep-mfm-month-date" onchange="renderRepMonth('mfm')"/>
+              <button class="dl-btn" onclick="downloadExcel('rep-mfm-month-table', 'MFM_Monthly_Report')">📥 Excel</button>
+              <button class="dl-btn pdf-btn" onclick="downloadPDF('rep-mfm-month-content', 'MFM_Monthly_Report')">📄 PDF</button>
+            </div>
+            <div class="rep-summary-row" id="rep-mfm-month-summary"></div>
+            <div class="chart-card">
+              <div class="chart-title">MFM — <b id="rep-mfm-month-charttitle">Monthly Trend</b></div>
+              <div class="chart-wrap"><canvas id="rep-mfm-month-chart"></canvas></div>
+            </div>
+            <div class="dc" id="rep-mfm-month-content">
+              <div class="dc-hdr">MFM — <span id="rep-mfm-month-title">Monthly Report</span></div>
+              <div class="tw-tall">
+                <table id="rep-mfm-month-table">
+                  <thead><tr id="rep-mfm-month-head"><th>Date</th></tr></thead>
+                  <tbody id="rep-mfm-month-body"><tr><td class="pm">Month select करा</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MFM YEARLY REPORT -->
+          <div id="rep-mfm-year" style="display:none">
+            <div class="filter-bar">
+              <label>Year</label>
+              <select id="rep-mfm-year-date" onchange="renderRepYear('mfm')"></select>
+              <button class="dl-btn" onclick="downloadExcel('rep-mfm-year-table', 'MFM_Yearly_Report')">📥 Excel</button>
+              <button class="dl-btn pdf-btn" onclick="downloadPDF('rep-mfm-year-content', 'MFM_Yearly_Report')">📄 PDF</button>
+            </div>
+            <div class="rep-summary-row" id="rep-mfm-year-summary"></div>
+            <div class="chart-card">
+              <div class="chart-title">MFM — <b id="rep-mfm-year-charttitle">Yearly Trend</b></div>
+              <div class="chart-wrap"><canvas id="rep-mfm-year-chart"></canvas></div>
+            </div>
+            <div class="dc" id="rep-mfm-year-content">
+              <div class="dc-hdr">MFM — <span id="rep-mfm-year-title">Yearly Report</span></div>
+              <div class="tw-tall">
+                <table id="rep-mfm-year-table">
+                  <thead><tr id="rep-mfm-year-head"><th>Month</th></tr></thead>
+                  <tbody id="rep-mfm-year-body"><tr><td class="pm">Year select करा</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
+      <!-- ===== INVERTER TABULAR ===== -->
       <div id="tp-inv" style="display:none">
         <div class="itab-row">
           <button class="itab active" id="ti-day" onclick="switchTabSub('inv','day')">📅 Day Data</button>
@@ -309,11 +445,89 @@ tr:hover td{background:rgba(246,201,14,.03);}
             </div>
           </div>
         </div>
+
+        <!-- INVERTER REPORTS -->
         <div id="tp-inv-rep" style="display:none">
-          <div class="dc"><div class="pm" style="padding:50px">📁 Inverter Reports URL नंतर update केले जाईल.</div></div>
+          <div class="itab-row">
+            <button class="itab active" id="ir-day" onclick="switchRepSub('inv','day')">📅 Date Range Report</button>
+            <button class="itab" id="ir-mon" onclick="switchRepSub('inv','month')">🗓 Monthly Report</button>
+            <button class="itab" id="ir-yr" onclick="switchRepSub('inv','year')">📆 Yearly Report</button>
+          </div>
+
+          <!-- INVERTER DATE RANGE REPORT -->
+          <div id="rep-inv-day">
+            <div class="filter-bar">
+              <label>From</label>
+              <input type="date" id="rep-inv-from-date" onchange="renderRepPeriod('inv')"/>
+              <label>To</label>
+              <input type="date" id="rep-inv-to-date" onchange="renderRepPeriod('inv')"/>
+              <span id="rep-inv-range-label" class="period-label" style="display:none"></span>
+              <button class="dl-btn" onclick="downloadExcel('rep-inv-day-table', 'Inverter_Period_Report')">📥 Excel</button>
+              <button class="dl-btn pdf-btn" onclick="downloadPDF('rep-inv-day-content', 'Inverter_Period_Report')">📄 PDF</button>
+            </div>
+            <div class="rep-summary-row" id="rep-inv-period-summary"></div>
+            <div class="dc" id="rep-inv-day-content">
+              <div class="dc-hdr">Inverter — <span id="rep-inv-day-title">Date Range Report</span></div>
+              <div class="tw-tall">
+                <table id="rep-inv-day-table">
+                  <thead><tr id="rep-inv-day-head"><th>Date</th></tr></thead>
+                  <tbody id="rep-inv-day-body"><tr><td colspan="2" class="pm">From आणि To date select करा</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- INVERTER MONTHLY REPORT -->
+          <div id="rep-inv-month" style="display:none">
+            <div class="filter-bar">
+              <label>Month</label>
+              <input type="month" id="rep-inv-month-date" onchange="renderRepMonth('inv')"/>
+              <button class="dl-btn" onclick="downloadExcel('rep-inv-month-table', 'Inverter_Monthly_Report')">📥 Excel</button>
+              <button class="dl-btn pdf-btn" onclick="downloadPDF('rep-inv-month-content', 'Inverter_Monthly_Report')">📄 PDF</button>
+            </div>
+            <div class="rep-summary-row" id="rep-inv-month-summary"></div>
+            <div class="chart-card">
+              <div class="chart-title">Inverter — <b id="rep-inv-month-charttitle">Monthly Trend</b></div>
+              <div class="chart-wrap"><canvas id="rep-inv-month-chart"></canvas></div>
+            </div>
+            <div class="dc" id="rep-inv-month-content">
+              <div class="dc-hdr">Inverter — <span id="rep-inv-month-title">Monthly Report</span></div>
+              <div class="tw-tall">
+                <table id="rep-inv-month-table">
+                  <thead><tr id="rep-inv-month-head"><th>Date</th></tr></thead>
+                  <tbody id="rep-inv-month-body"><tr><td class="pm">Month select करा</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- INVERTER YEARLY REPORT -->
+          <div id="rep-inv-year" style="display:none">
+            <div class="filter-bar">
+              <label>Year</label>
+              <select id="rep-inv-year-date" onchange="renderRepYear('inv')"></select>
+              <button class="dl-btn" onclick="downloadExcel('rep-inv-year-table', 'Inverter_Yearly_Report')">📥 Excel</button>
+              <button class="dl-btn pdf-btn" onclick="downloadPDF('rep-inv-year-content', 'Inverter_Yearly_Report')">📄 PDF</button>
+            </div>
+            <div class="rep-summary-row" id="rep-inv-year-summary"></div>
+            <div class="chart-card">
+              <div class="chart-title">Inverter — <b id="rep-inv-year-charttitle">Yearly Trend</b></div>
+              <div class="chart-wrap"><canvas id="rep-inv-year-chart"></canvas></div>
+            </div>
+            <div class="dc" id="rep-inv-year-content">
+              <div class="dc-hdr">Inverter — <span id="rep-inv-year-title">Yearly Report</span></div>
+              <div class="tw-tall">
+                <table id="rep-inv-year-table">
+                  <thead><tr id="rep-inv-year-head"><th>Month</th></tr></thead>
+                  <tbody id="rep-inv-year-body"><tr><td class="pm">Year select करा</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
+      <!-- ===== SMB TABULAR ===== -->
       <div id="tp-smb" style="display:none">
         <div class="itab-row">
           <button class="itab active" id="ts-day" onclick="switchTabSub('smb','day')">📅 Day Data</button>
@@ -350,15 +564,13 @@ tr:hover td{background:rgba(246,201,14,.03);}
 
 <script>
 // ==========================================
-// EXAMPLE 1: MFM किंवा Inverter पूर्ण बंद करणे
+// CONFIG — Disabled devices
 // ==========================================
-// जर एखादा इनव्हरटर किंवा MFM पूर्ण फिल्टर करायचा असेल तर खाली नाव टाका.
 const HARDCODED_DISABLED = {
   mfm: new Set(['PHT4', 'PHT5']),
-  inv: new Set(['BIL_1', 'BIL_2',
-'BIL_3', 'BIL_4', 'BIL_5', 'Swati_1', 'Swati_2', 'Swati_3', 'Swati_4', 'Swati_5', 'Swati_6', 'Swati_7', 'Swati_8'])
+  inv: new Set(['BIL_1', 'BIL_2','BIL_3', 'BIL_4', 'BIL_5',
+    'Swati_1', 'Swati_2', 'Swati_3', 'Swati_4', 'Swati_5', 'Swati_6', 'Swati_7', 'Swati_8'])
 };
-
 function isMfmEnabled(name) { return !HARDCODED_DISABLED.mfm.has(name); }
 function isInvEnabled(name) { return !HARDCODED_DISABLED.inv.has(name); }
 
@@ -367,35 +579,16 @@ const SMB_KEYS = [];
 for(let i=1;i<=32;i++) SMB_KEYS.push('s'+i);
 function smbDefaultEntry(sKey) { return { name: sKey.toUpperCase(), enabled: true }; }
 
-// ==========================================
-// EXAMPLE 2: SMB स्ट्रिंग्स बंद करणे (आता पूर्ण गायब होतील)
-// ==========================================
 function loadHardcodedSmbSettings() {
   smbSettings['BIL_1'] = {};
   SMB_KEYS.forEach(k => { smbSettings['BIL_1'][k] = smbDefaultEntry(k); }); 
-  smbSettings['BIL_1']['s1'].name = "Zone_A";   // नाव बदलले
-  smbSettings['BIL_1']['s3'].enabled = false;   // S3 पूर्णपणे गायब होईल
-  smbSettings['BIL_1']['s4'].enabled = false;   
+  smbSettings['BIL_1']['s1'].name = "Zone_A";
+  smbSettings['BIL_1']['s3'].enabled = false;
+  smbSettings['BIL_1']['s4'].enabled = false;
   
   smbSettings['BIL_2'] = {};
   SMB_KEYS.forEach(k => { smbSettings['BIL_2'][k] = smbDefaultEntry(k); });
   smbSettings['BIL_2']['s4'].enabled = false;
-
-  // उदाहरण अ: समजा 'Inverter_01' च्या S3 आणि S4 स्ट्रिंग्स बंद करायच्या आहेत आणि S1 चे नाव 'Zone_A' करायचे आहे:
-  /*
-  smbSettings['Inverter_01'] = {};
-  SMB_KEYS.forEach(k => { smbSettings['Inverter_01'][k] = smbDefaultEntry(k); }); 
-  smbSettings['Inverter_01']['s1'].name = "Zone_A";   // नाव बदलले
-  smbSettings['Inverter_01']['s3'].enabled = false;   // S3 पूर्णपणे गायब होईल
-  smbSettings['Inverter_01']['s4'].enabled = false;   // S4 पूर्णपणे गायब होईल
-  */
-
-  // उदाहरण ब: समजा 'Inverter_02' ची S10 स्ट्रिंग बंद करायची आहे:
-  /*
-  smbSettings['Inverter_02'] = {};
-  SMB_KEYS.forEach(k => { smbSettings['Inverter_02'][k] = smbDefaultEntry(k); });
-  smbSettings['Inverter_02']['s10'].enabled = false;  // S10 पूर्णपणे गायब होईल
-  */
 }
 
 function smbGetInverterSettings(invName) {
@@ -412,6 +605,17 @@ let knownInvDevices = [];
 
 const DATA_URL = "https://script.google.com/macros/s/AKfycbydd54EPNw3jSiol2ggQOtyL-1mTc1ESXDNKl8MWwj0Zw3tZRic9CzrkjyYrarAIJNChw/exec";
 const REFRESH  = 5*60*1000;
+
+// ==========================================
+// REPORTS — Google Sheet config
+// ==========================================
+const REPORT_SHEET_ID = "1at6CowluyEeiVHi-sBnj63i1wRuCOQIotl0NBAwxIMA";
+const REPORT_SHEET_GID = "528894020";
+const REPORT_SHEET_URL = `https://docs.google.com/spreadsheets/d/${REPORT_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${REPORT_SHEET_GID}`;
+
+let reportSheetData = null;
+let reportSheetFetching = null;
+
 const C = {
   ts:0,company:1,site:2,name:3,type:4,
   vr:5,vy:6,vb:7,ir:8,iy:9,ib:10,
@@ -430,6 +634,9 @@ const C = {
 let chart = null;
 const dayCache = {};
 
+// ==========================================
+// CSV PARSE HELPERS
+// ==========================================
 function parseCSVToRows(raw) {
   const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l);
   const mfm = [], inv = [];
@@ -444,14 +651,107 @@ function parseCSVToRows(raw) {
   return { mfm, inv };
 }
 
+function parseCSVLine(line) {
+  const out = []; let cur = ''; let inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if(ch === '"') inQuotes = true;
+      else if(ch === ','){ out.push(cur); cur=''; }
+      else cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseDDMMYYYY(str) {
+  if(!str) return null;
+  const s = String(str).trim();
+  const m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  if(!m) return null;
+  const day = parseInt(m[1],10), month = parseInt(m[2],10), year = parseInt(m[3],10);
+  if(month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return new Date(year, month-1, day);
+}
+
+function formatDDMMYYYY(d) {
+  return String(d.getDate()).padStart(2,'0') + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + d.getFullYear();
+}
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function parseReportSheetCSV(raw) {
+  const lines = raw.replace(/\r/g,'').split('\n').filter(l => l.trim() !== '');
+  if(lines.length === 0) return { header: [], rows: [] };
+  const headerCols = parseCSVLine(lines[0]).map(h => h.trim());
+  const deviceCols = headerCols.slice(1);
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const cols = parseCSVLine(lines[i]);
+    if(cols.length === 0) continue;
+    const dateStr = (cols[0]||'').trim();
+    const dateObj = parseDDMMYYYY(dateStr);
+    if(!dateObj) continue;
+    const values = {};
+    deviceCols.forEach((colName, idx) => {
+      const raw = (cols[idx+1] !== undefined) ? cols[idx+1].trim() : '';
+      const num = parseFloat(raw);
+      values[colName] = (raw === '' || isNaN(num)) ? null : num;
+    });
+    rows.push({ date: dateObj, dateStr, values });
+  }
+  rows.sort((a,b) => a.date - b.date);
+  return { header: deviceCols, rows };
+}
+
+async function ensureReportSheetData() {
+  if(reportSheetData) return reportSheetData;
+  if(reportSheetFetching) return reportSheetFetching;
+  reportSheetFetching = (async () => {
+    const url = REPORT_SHEET_URL + '&_nc=' + Date.now();
+    const r = await fetch(url, { cache: 'no-store' });
+    if(!r.ok) throw new Error('Sheet fetch HTTP '+r.status);
+    const text = await r.text();
+    reportSheetData = parseReportSheetCSV(text);
+    return reportSheetData;
+  })();
+  try { return await reportSheetFetching; }
+  finally { reportSheetFetching = null; }
+}
+
+// ==========================================
+// COLUMN SPLIT — MFM vs Inverter (position based)
+// ==========================================
+const MFM_COL_START = 0;
+const MFM_COL_COUNT = 4;
+const INV_COL_START = 4;
+const INV_COL_COUNT = 7;
+
+function getReportColumnsForGroup(group) {
+  if(!reportSheetData) return [];
+  const allCols = reportSheetData.header;
+  const disabled = group === 'mfm' ? HARDCODED_DISABLED.mfm : HARDCODED_DISABLED.inv;
+  const slice = group === 'mfm'
+    ? allCols.slice(MFM_COL_START, MFM_COL_START + MFM_COL_COUNT)
+    : allCols.slice(INV_COL_START, INV_COL_START + INV_COL_COUNT);
+  return slice.filter(c => !disabled.has(c));
+}
+
+// ==========================================
+// DEVICE MANAGEMENT
+// ==========================================
 function updateKnownDevices(parsed) {
   const mfmNames = [...new Set(parsed.mfm.map(r=>r[C.name]||'').filter(Boolean))].sort();
   const invNames = [...new Set(parsed.inv.map(r=>r[C.name]||'').filter(Boolean))].sort();
   let changed = false;
-  
   mfmNames.forEach(n => { if(isMfmEnabled(n) && !knownMfmDevices.includes(n)){ knownMfmDevices.push(n); changed=true; }});
   invNames.forEach(n => { if(isInvEnabled(n) && !knownInvDevices.includes(n)){ knownInvDevices.push(n); changed=true; }});
-  
   if(changed) {
     knownMfmDevices.sort(); knownInvDevices.sort();
     populateDropdown('mfm-dev-filter', knownMfmDevices, 'ALL', 'All MFM');
@@ -471,6 +771,9 @@ function populateDropdown(id, list, defaultVal = null, defaultText = '') {
   else if(defaultVal !== null) { sel.value = defaultVal; }
 }
 
+// ==========================================
+// LIVE DATA FETCH
+// ==========================================
 async function fetchDayCSV(compactDate) {
   const url = DATA_URL + '?date=' + compactDate + '&_nc=' + Date.now();
   const r = await fetch(url, { cache: 'no-store' });
@@ -493,6 +796,82 @@ async function fetchLiveData() {
     if(document.getElementById('inv-date-filter').value === todayStrISO()) renderInvDay();
     if(document.getElementById('smb-date-filter').value === todayStrISO()) renderSmbDay();
   } catch(e) { setStatus('err','❌ '+e.message); }
+  // Load MFM report cards in background (doesn't block live data)
+  loadDashboardMfmCards();
+}
+
+// ==========================================
+// DASHBOARD MFM CARDS — Cards 2,3,4,5
+// Fetches report sheet once, computes Today / Yesterday / Month / Year totals
+// ==========================================
+async function loadDashboardMfmCards() {
+  try {
+    await ensureReportSheetData();
+    const cols = getReportColumnsForGroup('mfm');
+    if(!cols.length) return;
+
+    const now   = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yest  = new Date(today); yest.setDate(yest.getDate() - 1);
+    const curY  = today.getFullYear();
+    const curM  = today.getMonth(); // 0-based
+
+    // Index sheet rows by isoDate string
+    const rowMap = new Map();
+    reportSheetData.rows.forEach(r => rowMap.set(isoFromDate(r.date), r));
+
+    // Helper: sum all enabled MFM cols for a given row (null-safe)
+    function sumCols(row) {
+      if(!row) return null;
+      let s = 0, hasVal = false;
+      cols.forEach(c => { const v = row.values[c]; if(v !== null && v !== undefined){ s += v; hasVal = true; } });
+      return hasVal ? s : null;
+    }
+
+    // Card 2 — Today
+    const todayRow = rowMap.get(isoFromDate(today));
+    const todayVal = sumCols(todayRow);
+    document.getElementById('c-today-mfm').textContent = todayVal !== null ? fmtVal(todayVal) : '—';
+    document.getElementById('c-today-mfm').classList.remove('card-loading');
+    document.getElementById('c-today-date').textContent = formatDDMMYYYY(today);
+
+    // Card 3 — Yesterday
+    const yesterdayRow = rowMap.get(isoFromDate(yest));
+    const yesterdayVal = sumCols(yesterdayRow);
+    document.getElementById('c-yest-mfm').textContent = yesterdayVal !== null ? fmtVal(yesterdayVal) : '—';
+    document.getElementById('c-yest-mfm').classList.remove('card-loading');
+    document.getElementById('c-yest-date').textContent = formatDDMMYYYY(yest);
+
+    // Card 4 — This Month (sum all days in current month from sheet)
+    let monthTotal = 0, monthHasData = false;
+    reportSheetData.rows.forEach(r => {
+      if(r.date.getFullYear() === curY && r.date.getMonth() === curM) {
+        cols.forEach(c => { const v = r.values[c]; if(v !== null && v !== undefined){ monthTotal += v; monthHasData = true; } });
+      }
+    });
+    document.getElementById('c-month-mfm').textContent = monthHasData ? fmtVal(monthTotal) : '—';
+    document.getElementById('c-month-mfm').classList.remove('card-loading');
+    document.getElementById('c-month-label').textContent = MONTH_FULL[curM] + ' ' + curY;
+
+    // Card 5 — This Year (sum all days in current year from sheet)
+    let yearTotal = 0, yearHasData = false;
+    reportSheetData.rows.forEach(r => {
+      if(r.date.getFullYear() === curY) {
+        cols.forEach(c => { const v = r.values[c]; if(v !== null && v !== undefined){ yearTotal += v; yearHasData = true; } });
+      }
+    });
+    document.getElementById('c-year-mfm').textContent = yearHasData ? fmtVal(yearTotal) : '—';
+    document.getElementById('c-year-mfm').classList.remove('card-loading');
+    document.getElementById('c-year-label').textContent = 'Year ' + curY;
+
+  } catch(e) {
+    // Silent fail — cards stay showing ⋯ or — 
+    ['c-today-mfm','c-yest-mfm','c-month-mfm','c-year-mfm'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el){ el.textContent = 'Err'; el.classList.remove('card-loading'); }
+    });
+    console.warn('Dashboard MFM cards error:', e.message);
+  }
 }
 
 function renderLiveFromParsed(parsed) {
@@ -500,10 +879,17 @@ function renderLiveFromParsed(parsed) {
   const enabledInv = parsed.inv.filter(r => isInvEnabled(r[C.name]||''));
   const latestMfm = latestPerDevice(enabledMfm);
   const latestInv = latestPerDevice(enabledInv);
-  let totalKW=0, totalEkwh=0;
-  latestMfm.forEach(r=>{ totalKW+=parseFloat(r[C.w]||0); totalEkwh+=parseFloat(r[C.ekwh]||0); });
-  document.getElementById('c-kw').textContent = totalKW ? scaleKW(totalKW) : '—';
-  document.getElementById('c-kwh').textContent = totalEkwh ? scaleKWh(totalEkwh): '—';
+
+  // Card 1: Total Inverter AC Power (kW) — sum of win from all inverters
+  let totalInvKW = 0, activeInv = 0;
+  latestInv.forEach(r => {
+    const w = parseFloat(r[C.win]||0);
+    totalInvKW += w;
+    if(w > 0) activeInv++;
+  });
+  document.getElementById('c-kw').textContent = totalInvKW ? totalInvKW.toFixed(2) : '—';
+  document.getElementById('c-inv-count').textContent = activeInv + '/' + latestInv.length;
+
   const lastTs = latestMfm.length ? (latestMfm[latestMfm.length-1][C.ts]||'') : '';
   ['mfm-ts','inv-ts','smb-ts'].forEach(id=> { if(document.getElementById(id)) document.getElementById(id).textContent = lastTs ? ' '+lastTs : ''; });
   document.getElementById('mfm-live-body').innerHTML = latestMfm.length ? latestMfm.map(mfmRow).join('') : '<tr><td colspan="15" class="pm">No Data</td></tr>';
@@ -556,6 +942,9 @@ function updateChart(invRows) {
   } else { chart.data.labels = labels; chart.data.datasets[0].data = data; chart.update(); }
 }
 
+// ==========================================
+// DAY DATA RENDERING
+// ==========================================
 function getTargetDateISO(type) { return document.getElementById(type+'-date-filter').value || todayStrISO(); }
 
 async function ensureDataForISO(isoDate) {
@@ -622,15 +1011,11 @@ function renderSmbDay() {
   const rows = d.inv.filter(r => r[C.name]===fInv);
   document.getElementById('smb-row-count').textContent = rows.length + ' Rows';
   document.getElementById('smb-day-title').textContent = `SMB Day Data (${fInv}) — ${iso}`;
-  
   const settings = smbGetInverterSettings(fInv);
-  // इथे फक्त 'enabled: true' असलेल्याच स्ट्रिंग्स फिल्टर होतात (Tabular View साठी)
   const activeKeys = SMB_KEYS.filter(k => settings[k] && settings[k].enabled);
-  
   let headHtml = '<th>Time</th><th>Device</th>';
   activeKeys.forEach(k => { headHtml += `<th>${settings[k].name} (A)</th>`; });
   document.getElementById('smb-day-head').innerHTML = headHtml;
-  
   document.getElementById('smb-day-body').innerHTML = rows.length ? rows.map(r => {
     let tdHtml = `<td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td>`;
     activeKeys.forEach(k => { tdHtml += `<td>${val(r[C[k]])}</td>`; });
@@ -645,52 +1030,357 @@ function renderSmbLive() {
   const rows = window.__latestInvRowsForSmb || [];
   const r = rows.find(x => x[C.name]===fInv);
   if(!r) { document.getElementById('smb-live-body').innerHTML='<tr><td colspan="3" class="pm">या Inverter चा लाईव्ह डेटा उपलब्ध नाही</td></tr>'; return; }
-  
   const settings = smbGetInverterSettings(fInv);
   let html = '';
-  
   SMB_KEYS.forEach(k => {
     const s = settings[k] || smbDefaultEntry(k);
-    
-    // फिक्स: जर स्ट्रिंग 'enabled: false' असेल, तर ती इथूनच 'return' होईल (म्हणजे डॅशबोर्डवर दिसणारच नाही)
     if (s.enabled === false) return; 
-    
     html += `<tr><td>${k.toUpperCase()}</td><td>${s.name}</td><td>${val(r[C[k]])}</td></tr>`;
   });
   document.getElementById('smb-live-body').innerHTML = html;
 }
 
+// ==========================================
+// DOWNLOAD HELPERS
+// ==========================================
 function downloadExcel(tableID, filename = '') {
-    const table = document.getElementById(tableID); if (!table) return;
-    let csv = []; const rows = table.querySelectorAll("tr");
-    for (let i = 0; i < rows.length; i++) {
-        let row = [], cols = rows[i].querySelectorAll("td, th");
-        for (let j = 0; j < cols.length; j++) {
-            row.push('"' + cols[j].innerText.trim().replace(/"/g, '""') + '"');
-        }
-        csv.push(row.join(","));
+  const table = document.getElementById(tableID); if (!table) return;
+  let csv = []; const rows = table.querySelectorAll("tr");
+  for (let i = 0; i < rows.length; i++) {
+    let row = [], cols = rows[i].querySelectorAll("td, th");
+    for (let j = 0; j < cols.length; j++) {
+      row.push('"' + cols[j].innerText.trim().replace(/"/g, '""') + '"');
     }
-    const csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", (filename || 'Export') + '_' + new Date().toISOString().slice(0,10) + '.csv');
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    csv.push(row.join(","));
+  }
+  const csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+  const link = document.createElement("a");
+  link.setAttribute("href", encodeURI(csvContent));
+  link.setAttribute("download", (filename || 'Export') + '_' + new Date().toISOString().slice(0,10) + '.csv');
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function downloadPDF(elementID, filename = '') {
-    const element = document.getElementById(elementID); if (!element) return;
-    const opt = {
-        margin:       0.2,
-        filename:     (filename || 'Report') + '_' + new Date().toISOString().slice(0,10) + '.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, backgroundColor: '#0d1117', useCORS: true },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-    };
-    html2pdf().set(opt).from(element).save();
+  const element = document.getElementById(elementID); if (!element) return;
+  const opt = {
+    margin: 0.2, filename: (filename || 'Report') + '_' + new Date().toISOString().slice(0,10) + '.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, backgroundColor: '#0d1117', useCORS: true },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+  };
+  html2pdf().set(opt).from(element).save();
 }
 
-/* VIEW TOGGLES */
+// ==========================================
+// REPORTS — HELPER UTILS
+// ==========================================
+function fmtVal(n) {
+  if(n === null || n === undefined) return '—';
+  return Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+
+function isoFromDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// Summary cards renderer — shared by all report types
+function renderSumCards(containerId, cols, totals, grandTotal) {
+  const el = document.getElementById(containerId); if(!el) return;
+  el.innerHTML = cols.map(c =>
+    `<div class="rep-sum-card"><div class="rep-sum-lbl">${c}</div><div class="rep-sum-val">${fmtVal(totals[c])}</div></div>`
+  ).join('') + `<div class="rep-sum-card"><div class="rep-sum-lbl">Grand Total</div><div class="rep-sum-val total">${fmtVal(grandTotal)}</div></div>`;
+}
+
+// ==========================================
+// REPORTS — 1. DATE RANGE (PERIOD) REPORT
+// ==========================================
+// Format: Rows = each date in range, Cols = All devices + Total
+// Shows every date between From and To (even if no data, shows — )
+
+async function renderRepPeriod(group) {
+  const fromEl = document.getElementById(`rep-${group}-from-date`);
+  const toEl   = document.getElementById(`rep-${group}-to-date`);
+  const bodyEl = document.getElementById(`rep-${group}-day-body`);
+  const headEl = document.getElementById(`rep-${group}-day-head`);
+  const titleEl = document.getElementById(`rep-${group}-day-title`);
+  const sumEl   = document.getElementById(`rep-${group}-period-summary`);
+  const rangeLabel = document.getElementById(`rep-${group}-range-label`);
+
+  if(!fromEl.value || !toEl.value) {
+    bodyEl.innerHTML = `<tr><td colspan="2" class="pm">From आणि To date select करा</td></tr>`;
+    if(sumEl) sumEl.innerHTML = '';
+    if(rangeLabel) rangeLabel.style.display='none';
+    return;
+  }
+
+  const [fy,fm,fd] = fromEl.value.split('-').map(Number);
+  const [ty,tm,td] = toEl.value.split('-').map(Number);
+  const fromDate = new Date(fy,fm-1,fd);
+  const toDate   = new Date(ty,tm-1,td);
+
+  if(fromDate > toDate) {
+    bodyEl.innerHTML = `<tr><td colspan="2" class="pm neg">❌ "From" date "To" date पेक्षा जास्त असू शकत नाही</td></tr>`;
+    return;
+  }
+
+  bodyEl.innerHTML = `<tr><td class="pm"><span class="spin"></span> लोड होत आहे...</td></tr>`;
+  if(sumEl) sumEl.innerHTML = '';
+  if(rangeLabel) rangeLabel.style.display='none';
+
+  try {
+    await ensureReportSheetData();
+    const cols = getReportColumnsForGroup(group);
+
+    // Build list of all dates in range
+    const allDates = [];
+    let cur = new Date(fromDate);
+    while(cur <= toDate) {
+      allDates.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    // Index sheet rows by date string for fast lookup
+    const rowMap = new Map();
+    reportSheetData.rows.forEach(r => rowMap.set(isoFromDate(r.date), r));
+
+    const dayCount = allDates.length;
+    titleEl.textContent = `Date Range Report — ${formatDDMMYYYY(fromDate)} to ${formatDDMMYYYY(toDate)} (${dayCount} days)`;
+    if(rangeLabel) {
+      rangeLabel.textContent = `📅 ${dayCount} days`;
+      rangeLabel.style.display = '';
+    }
+
+    // Header: Date | Device1 | Device2 | ... | Total
+    headEl.innerHTML = '<th>Date</th>' + cols.map(c => `<th>${c}</th>`).join('') + '<th>Total</th>';
+
+    // Device totals across all dates
+    const deviceTotals = {}; cols.forEach(c => deviceTotals[c] = 0);
+    let grandTotal = 0;
+
+    const bodyRowsHtml = allDates.map(d => {
+      const diso = isoFromDate(d);
+      const sheetRow = rowMap.get(diso);
+      let rowTotal = 0;
+      const tds = cols.map(c => {
+        const v = sheetRow ? sheetRow.values[c] : null;
+        if(v !== null && v !== undefined) { deviceTotals[c] += v; rowTotal += v; }
+        return `<td>${fmtVal(v)}</td>`;
+      }).join('');
+      grandTotal += rowTotal;
+      return `<tr><td>${formatDDMMYYYY(d)}</td>${tds}<td>${fmtVal(rowTotal)}</td></tr>`;
+    }).join('');
+
+    const totalRowHtml = `<tr class="total-row"><td>TOTAL</td>${cols.map(c=>`<td>${fmtVal(deviceTotals[c])}</td>`).join('')}<td>${fmtVal(grandTotal)}</td></tr>`;
+    bodyEl.innerHTML = bodyRowsHtml + totalRowHtml;
+
+    renderSumCards(`rep-${group}-period-summary`, cols, deviceTotals, grandTotal);
+
+  } catch(e) {
+    bodyEl.innerHTML = `<tr><td class="pm neg">❌ एरर: ${e.message}</td></tr>`;
+  }
+}
+
+// ==========================================
+// REPORTS — 2. MONTHLY REPORT
+// ==========================================
+// Format: Rows = all dates in selected month, Cols = All devices + Total
+// Bottom row = totals per device + grand total
+
+let repMonthChart = { mfm: null, inv: null };
+
+async function renderRepMonth(group) {
+  const monthInput = document.getElementById(`rep-${group}-month-date`);
+  const bodyEl = document.getElementById(`rep-${group}-month-body`);
+  const headEl = document.getElementById(`rep-${group}-month-head`);
+  const titleEl = document.getElementById(`rep-${group}-month-title`);
+  const sumEl = document.getElementById(`rep-${group}-month-summary`);
+
+  if(!monthInput.value) {
+    bodyEl.innerHTML = `<tr><td class="pm">Month select करा</td></tr>`;
+    if(sumEl) sumEl.innerHTML = '';
+    return;
+  }
+
+  bodyEl.innerHTML = `<tr><td class="pm"><span class="spin"></span> लोड होत आहे...</td></tr>`;
+  if(sumEl) sumEl.innerHTML = '';
+
+  try {
+    await ensureReportSheetData();
+    const cols = getReportColumnsForGroup(group);
+    const [y,m] = monthInput.value.split('-').map(Number);
+
+    // All dates in this month
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const allDates = Array.from({length: daysInMonth}, (_,i) => new Date(y, m-1, i+1));
+
+    // Sheet row index
+    const rowMap = new Map();
+    reportSheetData.rows.forEach(r => rowMap.set(isoFromDate(r.date), r));
+
+    titleEl.textContent = `Monthly Report — ${MONTH_FULL[m-1]} ${y}`;
+    document.getElementById(`rep-${group}-month-charttitle`).textContent = `Daily Trend — ${MONTH_FULL[m-1]} ${y}`;
+
+    // Header: Date | Device1 | ... | Total
+    headEl.innerHTML = '<th>Date</th>' + cols.map(c => `<th>${c}</th>`).join('') + '<th>Total</th>';
+
+    const deviceTotals = {}; cols.forEach(c => deviceTotals[c] = 0);
+    let grandTotal = 0;
+
+    const bodyRowsHtml = allDates.map(d => {
+      const diso = isoFromDate(d);
+      const sheetRow = rowMap.get(diso);
+      let rowTotal = 0;
+      const tds = cols.map(c => {
+        const v = sheetRow ? sheetRow.values[c] : null;
+        if(v !== null && v !== undefined) { deviceTotals[c] += v; rowTotal += v; }
+        return `<td>${fmtVal(v)}</td>`;
+      }).join('');
+      grandTotal += rowTotal;
+      return `<tr><td>${formatDDMMYYYY(d)}</td>${tds}<td>${fmtVal(rowTotal)}</td></tr>`;
+    }).join('');
+
+    const totalRowHtml = `<tr class="total-row"><td>TOTAL</td>${cols.map(c=>`<td>${fmtVal(deviceTotals[c])}</td>`).join('')}<td>${fmtVal(grandTotal)}</td></tr>`;
+    bodyEl.innerHTML = bodyRowsHtml + totalRowHtml;
+
+    renderSumCards(`rep-${group}-month-summary`, cols, deviceTotals, grandTotal);
+
+    // Daily trend chart
+    const chartLabels = allDates.map(d => String(d.getDate()));
+    const chartData = allDates.map(d => {
+      const r = rowMap.get(isoFromDate(d));
+      return r ? cols.reduce((s,c) => s + (r.values[c] || 0), 0) : 0;
+    });
+    drawRepChart(`rep-${group}-month-chart`, group, 'month', chartLabels, chartData, 'Daily Total');
+
+  } catch(e) {
+    bodyEl.innerHTML = `<tr><td class="pm neg">❌ एरर: ${e.message}</td></tr>`;
+  }
+}
+
+// ==========================================
+// REPORTS — 3. YEARLY REPORT
+// ==========================================
+// Format: Rows = all 12 months, Cols = All devices + Total
+// Auto-loads current year by default
+
+let repYearChart = { mfm: null, inv: null };
+
+async function renderRepYear(group) {
+  const yearSelect = document.getElementById(`rep-${group}-year-date`);
+  const bodyEl = document.getElementById(`rep-${group}-year-body`);
+  const headEl = document.getElementById(`rep-${group}-year-head`);
+  const titleEl = document.getElementById(`rep-${group}-year-title`);
+  const sumEl = document.getElementById(`rep-${group}-year-summary`);
+
+  if(!yearSelect.value) {
+    bodyEl.innerHTML = `<tr><td class="pm">Year select करा</td></tr>`;
+    if(sumEl) sumEl.innerHTML = '';
+    return;
+  }
+
+  bodyEl.innerHTML = `<tr><td class="pm"><span class="spin"></span> लोड होत आहे...</td></tr>`;
+  if(sumEl) sumEl.innerHTML = '';
+
+  try {
+    await ensureReportSheetData();
+    const cols = getReportColumnsForGroup(group);
+    const y = parseInt(yearSelect.value, 10);
+
+    titleEl.textContent = `Yearly Report — ${y}`;
+    document.getElementById(`rep-${group}-year-charttitle`).textContent = `Monthly Trend — ${y}`;
+
+    // Header: Month | Device1 | ... | Total
+    headEl.innerHTML = '<th>Month</th>' + cols.map(c => `<th>${c}</th>`).join('') + '<th>Total</th>';
+
+    // Build 12 month buckets — sum all days in that month from sheet
+    const monthlyTotals = Array.from({length:12}, () => {
+      const o = {}; cols.forEach(c => o[c] = 0); return o;
+    });
+    const monthHasData = Array(12).fill(false);
+
+    reportSheetData.rows.forEach(r => {
+      if(r.date.getFullYear() !== y) return;
+      const mi = r.date.getMonth();
+      cols.forEach(c => {
+        if(r.values[c] !== null && r.values[c] !== undefined) {
+          monthlyTotals[mi][c] += r.values[c];
+          monthHasData[mi] = true;
+        }
+      });
+    });
+
+    const deviceGrandTotals = {}; cols.forEach(c => deviceGrandTotals[c] = 0);
+    let grandTotal = 0;
+
+    const bodyRowsHtml = monthlyTotals.map((mt, mi) => {
+      const rowTotal = cols.reduce((s,c) => s + mt[c], 0);
+      cols.forEach(c => deviceGrandTotals[c] += mt[c]);
+      grandTotal += rowTotal;
+      // Show — if no data for that month yet (future months)
+      const tds = cols.map(c => `<td>${monthHasData[mi] ? fmtVal(mt[c]) : '—'}</td>`).join('');
+      return `<tr><td>${MONTH_FULL[mi]}</td>${tds}<td>${monthHasData[mi] ? fmtVal(rowTotal) : '—'}</td></tr>`;
+    }).join('');
+
+    const totalRowHtml = `<tr class="total-row"><td>TOTAL</td>${cols.map(c=>`<td>${fmtVal(deviceGrandTotals[c])}</td>`).join('')}<td>${fmtVal(grandTotal)}</td></tr>`;
+    bodyEl.innerHTML = bodyRowsHtml + totalRowHtml;
+
+    renderSumCards(`rep-${group}-year-summary`, cols, deviceGrandTotals, grandTotal);
+
+    // Monthly trend chart — show 0 for future months
+    const chartLabels = MONTH_NAMES;
+    const chartData = monthlyTotals.map((mt, mi) => monthHasData[mi] ? cols.reduce((s,c)=>s+mt[c],0) : 0);
+    drawRepChart(`rep-${group}-year-chart`, group, 'year', chartLabels, chartData, 'Monthly Total');
+
+  } catch(e) {
+    bodyEl.innerHTML = `<tr><td class="pm neg">❌ एरर: ${e.message}</td></tr>`;
+  }
+}
+
+// ==========================================
+// CHART HELPER
+// ==========================================
+function drawRepChart(canvasId, group, period, labels, data, label) {
+  const storeRef = period === 'month' ? repMonthChart : repYearChart;
+  const ctx = document.getElementById(canvasId); if(!ctx) return;
+  const color = group === 'mfm' ? '#f6c90e' : '#38bdf8';
+  if(storeRef[group]) {
+    storeRef[group].data.labels = labels;
+    storeRef[group].data.datasets[0].data = data;
+    storeRef[group].data.datasets[0].label = label;
+    storeRef[group].update();
+  } else {
+    storeRef[group] = new Chart(ctx.getContext('2d'), {
+      type:'bar',
+      data:{ labels, datasets:[{ label, data, backgroundColor:color, borderRadius:4 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{grid:{color:'#2d3748'},ticks:{color:'#94a3b8'}}, x:{grid:{display:false},ticks:{color:'#94a3b8'}} } }
+    });
+  }
+}
+
+// ==========================================
+// YEAR DROPDOWN POPULATE
+// ==========================================
+function populateYearDropdowns() {
+  const currentYear = new Date().getFullYear();
+  // Collect years from sheet data + always include current year
+  let years = new Set([currentYear]);
+  if(reportSheetData && reportSheetData.rows.length) {
+    reportSheetData.rows.forEach(r => years.add(r.date.getFullYear()));
+  }
+  years = [...years].sort((a,b)=>b-a);
+
+  ['rep-mfm-year-date','rep-inv-year-date'].forEach(id => {
+    const sel = document.getElementById(id); if(!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    // Always default to current year
+    sel.value = currentVal || String(currentYear);
+  });
+}
+
+// ==========================================
+// VIEW + TAB NAVIGATION
+// ==========================================
 function goDash() { switchView('dash', 'Dashboard Overview'); }
 function goTab() { switchView('tab', 'Tabular Data View'); }
 function openTabular(type,sub) { goTab(); switchTabMain(type); switchTabSub(type,sub); }
@@ -702,38 +1392,91 @@ function switchView(v, title) {
   });
   document.getElementById('page-title').textContent = title;
 }
+
 function switchDash(t) {
   ['mfm','inv','smb'].forEach(x => {
     document.getElementById('dtab-'+x).classList.toggle('active', x===t);
     document.getElementById('dp-'+x).style.display = x===t ? '' : 'none';
   });
 }
+
 function switchTabMain(t) {
   ['mfm','inv','smb'].forEach(x=>{
     document.getElementById('tt-'+x).classList.toggle('active',x===t);
     document.getElementById('tp-'+x).style.display=x===t?'':'none';
   });
 }
-function switchTabSub(type,sub){
-  const map={mfm:['tm-day','tm-rep','tp-mfm-day','tp-mfm-rep'],inv:['ti-day','ti-rep','tp-inv-day','tp-inv-rep'],smb:['ts-day','ts-rep','tp-smb-day','tp-smb-rep']};
-  const [d,r,dp,rp]=map[type];
-  document.getElementById(d).classList.toggle('active',sub==='day');
-  document.getElementById(r).classList.toggle('active',sub==='report');
-  document.getElementById(dp).style.display=sub==='day'?'':'none';
-  document.getElementById(rp).style.display=sub==='report'?'':'none';
+
+function switchTabSub(type, sub) {
+  const map = {
+    mfm: ['tm-day','tm-rep','tp-mfm-day','tp-mfm-rep'],
+    inv: ['ti-day','ti-rep','tp-inv-day','tp-inv-rep'],
+    smb: ['ts-day','ts-rep','tp-smb-day','tp-smb-rep']
+  };
+  const [d,r,dp,rp] = map[type];
+  document.getElementById(d).classList.toggle('active', sub==='day');
+  document.getElementById(r).classList.toggle('active', sub==='report');
+  document.getElementById(dp).style.display = sub==='day' ? '' : 'none';
+  document.getElementById(rp).style.display = sub==='report' ? '' : 'none';
+
+  if(sub === 'report' && (type === 'mfm' || type === 'inv')) {
+    ensureReportSheetData().then(() => {
+      populateYearDropdowns();
+      // Default date range = current month's 1st to today
+      const today = todayStrISO();
+      const firstOfMonth = today.slice(0,7) + '-01';
+      const fromEl = document.getElementById(`rep-${type}-from-date`);
+      const toEl   = document.getElementById(`rep-${type}-to-date`);
+      const monthEl = document.getElementById(`rep-${type}-month-date`);
+      if(fromEl && !fromEl.value) { fromEl.value = firstOfMonth; fromEl.max = today; }
+      if(toEl   && !toEl.value)  { toEl.value = today;          toEl.max = today; }
+      if(monthEl && !monthEl.value) monthEl.value = today.slice(0,7);
+      // Render default sub-tab (Date Range)
+      switchRepSub(type, 'day');
+    }).catch(e => {
+      const bodyEl = document.getElementById(`rep-${type}-day-body`);
+      if(bodyEl) bodyEl.innerHTML = `<tr><td colspan="2" class="pm neg">❌ Sheet load एरर: ${e.message}</td></tr>`;
+    });
+  }
 }
 
+function switchRepSub(group, period) {
+  const prefix = group === 'mfm' ? 'mr' : 'ir';
+  const periods = ['day','month','year'];
+  const btnSuffixes = { day:'day', month:'mon', year:'yr' };
+  periods.forEach(p => {
+    document.getElementById(`${prefix}-${btnSuffixes[p]}`).classList.toggle('active', p === period);
+    document.getElementById(`rep-${group}-${p}`).style.display = p === period ? '' : 'none';
+  });
+  if(period === 'day')   renderRepPeriod(group);
+  if(period === 'month') renderRepMonth(group);
+  if(period === 'year')  renderRepYear(group);
+}
+
+// ==========================================
+// DATE / TIME UTILS
+// ==========================================
 function todayStrISO() {
-  const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function isoToCompact(iso) { return iso.replace(/-/g,''); }
 
-window.addEventListener('DOMContentLoaded', ()=>{
-  setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'}); },1000);
+// ==========================================
+// INIT
+// ==========================================
+window.addEventListener('DOMContentLoaded', () => {
+  setInterval(() => {
+    document.getElementById('clock').textContent = new Date().toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'medium'});
+  }, 1000);
   loadHardcodedSmbSettings();
   const today = todayStrISO();
-  ['mfm','inv','smb'].forEach(t => { const input = document.getElementById(t+'-date-filter'); if(input) { input.value = today; input.max = today; } });
-  fetchLiveData(); setInterval(fetchLiveData, REFRESH);
+  ['mfm','inv','smb'].forEach(t => {
+    const input = document.getElementById(t+'-date-filter');
+    if(input) { input.value = today; input.max = today; }
+  });
+  fetchLiveData();
+  setInterval(fetchLiveData, REFRESH);
 });
 </script>
 </body>
