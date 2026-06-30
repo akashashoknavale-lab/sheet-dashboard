@@ -913,9 +913,11 @@ function setStatus(type,msg) {
 
 function mfmRow(r) {
   return `<tr><td>${r[C.name]||'—'}</td><td>${val(r[C.vr])}</td><td>${val(r[C.vy])}</td><td>${val(r[C.vb])}</td>
-  <td>${val(r[C.ir])}</td><td>${val(r[C.iy])}</td><td>${val(r[C.ib])}</td><td>${val(r[C.w])}</td><td>${val(r[C.varC])}</td>
-  <td>${val(r[C.va])}</td><td>${val(r[C.pf])}</td><td>${val(r[C.f])}</td><td>${val(r[C.ikwh])}</td><td>${val(r[C.ekwh])}</td>
-  <td class="${stClass(r[C.status])}">${r[C.status]||'—'}</td></tr>`;
+  <td>${val(r[C.ir]/-1)}</td><td>${val(r[C.iy]/-1)}</td><td>${val(r[C.ib]/-1)}</td><td>${val(r[C.w]/(-1000))}</td><td>${val(r[C.varC]/1000)}</td>
+  <td>${val(r[C.va]/1000)}</td><td>${val(r[C.pf])}</td><td>${val(r[C.f])}</td><td>${val(r[C.ikwh])}</td><td>${val(r[C.ekwh])}</td>
+  
+  <td class="${stClass(r[C.status])}">${r[C.status]||'—'}</td> 
+  </tr>`;
 }
 function invRow(r) {
   return `<tr><td>${r[C.name]||'—'}</td><td>${val(r[C.v])}</td><td>${val(r[C.v] ? r[C.w] / r[C.v] : null)}</td><td>${val(r[C.w]/1000)}</td>
