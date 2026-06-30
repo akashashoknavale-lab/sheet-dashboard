@@ -825,7 +825,7 @@ async function loadDashboardMfmCards() {
       if(!row) return null;
       let s = 0, hasVal = false;
       cols.forEach(c => { const v = row.values[c]; if(v !== null && v !== undefined){ s += v; hasVal = true; } });
-      return hasVal ? s : null;
+      return hasVal ? s/1000 : null;
     }
 
     // Card 2 — Today
