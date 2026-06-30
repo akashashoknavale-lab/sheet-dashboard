@@ -912,7 +912,7 @@ function setStatus(type,msg) {
 }
 
 function mfmRow(r) {
-  return `<tr><td>${r[C.name]||'—'}</td><td>${val(r[C.vr])}</td><td>${val(r[C.vy])}</td><td>${val(r[C.vb])}</td>
+  return `<tr><td>${r[C.name]||'—'}</td><td>${val(r[C.vr]*1.73)}</td><td>${val(r[C.vy]*1.73)}</td><td>${val(r[C.vb]*1.73)}</td>
   <td>${val(r[C.ir]/-1)}</td><td>${val(r[C.iy]/-1)}</td><td>${val(r[C.ib]/-1)}</td><td>${val(r[C.w]/(-1000))}</td><td>${val(r[C.varC]/1000)}</td>
   <td>${val(r[C.va]/1000)}</td><td>${val(r[C.pf])}</td><td>${val(r[C.f])}</td><td>${val(r[C.ikwh])}</td><td>${val(r[C.ekwh])}</td>
   
