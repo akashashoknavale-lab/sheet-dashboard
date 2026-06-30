@@ -883,8 +883,8 @@ function renderLiveFromParsed(parsed) {
   // Card 1: Total Inverter AC Power (kW) — sum of win from all inverters
   let totalInvKW = 0, activeInv = 0;
   latestInv.forEach(r => {
-    const w = parseFloat(r[C.win]||0);
-    totalInvKW += w;
+    const w = parseFloat(r[C.w]||0);
+    totalInvKW += w/1000;
     if(w > 0) activeInv++;
   });
   document.getElementById('c-kw').textContent = totalInvKW ? totalInvKW.toFixed(2) : '—';
