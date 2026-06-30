@@ -990,7 +990,7 @@ function renderInvDay() {
   document.getElementById('inv-row-count').textContent = rows.length + ' Rows';
   document.getElementById('inv-day-title').textContent = `Day Data — ${iso}`;
   document.getElementById('inv-day-body').innerHTML = rows.length ? rows.map(r => `<tr>
-    <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td><td>${val(r[C.vin])}</td><td>${val(r[C.iin])}</td><td>${val(r[C.win])}</td>
+    <td>${r[C.ts]||'—'}</td><td>${r[C.name]||'—'}</td><td>${val(r[C.v])}</td><td>${val(r[C.i])}</td><td>${val(r[C.w])}</td>
     <td>${val(r[C.dkwh])}</td><td>${val(r[C.tkwh])}</td><td>${val(r[C.temp])}</td>
     <td>${val(r[C.mv1])}</td><td>${val(r[C.mv2])}</td><td>${val(r[C.mv3])}</td><td>${val(r[C.mv4])}</td><td>${val(r[C.mv5])}</td>
     <td class="${stClass(r[C.status])}">${r[C.status]||'—'}</td>
